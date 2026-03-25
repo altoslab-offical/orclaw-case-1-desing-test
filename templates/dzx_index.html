@@ -12,38 +12,79 @@
   <!-- fallback：如果上面 CDN 失敗也能正常顯示 -->
   
   <style>
-    * { font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; }
+    * { font-family: 'Noto Sans SC', 'Space Grotesk', sans-serif; }
     :root {
       --lime: #E85542;
       --orange: #FF6B35;
-      --black: #0b0e14;
-      --dark: #141820;
-      --card: #141820;
-      --border: #1e2433;
-      --gray: #8899aa;
+      --black: #080808;
+      --dark: #111111;
+      --card: #111111;
+      --border: #222222;
+      --gray: #888888;
     }
     html { scroll-behavior: smooth; }
-    body { background: #0b0e14; color: #fff; }
+    body { background: #080808; color: #fff; }
 
-    /* ── Space theme overrides ── */
-    .bg-black { background-color: #0b0e14 !important; }
-    [class*="bg-[#0d0d0d]"] { background-color: #141820 !important; }
-    [class*="bg-[#080808]"] { background-color: #0f1520 !important; }
-    [class*="bg-[#111]"]    { background-color: #161d2a !important; }
-    [class*="border-[#1a1a1a]"] { border-color: #1e2433 !important; }
-    [class*="border-[#222]"]    { border-color: #1e2433 !important; }
-    [class*="border-[#333]"]    { border-color: #263040 !important; }
+    /* ── Pure black theme overrides ── */
+    .bg-black { background-color: #080808 !important; }
+    [class*="bg-[#0d0d0d]"] { background-color: #111111 !important; }
+    [class*="bg-[#080808]"] { background-color: #0d0d0d !important; }
+    [class*="bg-[#111]"]    { background-color: #111111 !important; }
+    [class*="border-[#1a1a1a]"] { border-color: #222222 !important; }
+    [class*="border-[#222]"]    { border-color: #222222 !important; }
+    [class*="border-[#333]"]    { border-color: #2e2e2e !important; }
 
-    /* Nebula glow top-left */
+    /* Subtle top-left glow */
     body::before {
       content: '';
       position: fixed;
       top: -200px; left: -200px;
       width: 800px; height: 800px;
-      background: radial-gradient(circle, rgba(232,85,66,0.10) 0%, transparent 65%);
+      background: radial-gradient(circle, rgba(255,255,255,0.025) 0%, transparent 65%);
       pointer-events: none;
       z-index: 0;
     }
+
+    /* ── APEX-style pill buttons ── */
+    .btn-apex {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 9999px;
+      color: #fff;
+      font-weight: 700;
+      padding: 0.875rem 2rem;
+      font-size: 0.95rem;
+      letter-spacing: 0.01em;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    }
+    .btn-apex:hover {
+      background: rgba(255,255,255,0.14);
+      border-color: rgba(255,255,255,0.38);
+      transform: translateY(-1px);
+    }
+    .btn-apex-solid {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      background: #fff;
+      border: 1px solid rgba(255,255,255,0.8);
+      border-radius: 9999px;
+      color: #080808;
+      font-weight: 800;
+      padding: 0.875rem 2rem;
+      font-size: 0.95rem;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn-apex-solid:hover { background: #e8e8e8; transform: translateY(-1px); }
+    .btn-apex-ghost {
+      display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
+      background: transparent; border: none;
+      color: rgba(255,255,255,0.6);
+      font-weight: 600; padding: 0.875rem 1.25rem; font-size: 0.95rem;
+      transition: color 0.2s;
+    }
+    .btn-apex-ghost:hover { color: #fff; }
 
     /* Rounded cards */
     .card-hover { border-radius: 12px; overflow: hidden; }
@@ -55,8 +96,8 @@
       transition: background-color 0.4s ease, border-color 0.4s ease;
     }
     header.scrolled {
-      background-color: rgba(11, 14, 20, 0.97) !important;
-      border-color: #1e2433 !important;
+      background-color: rgba(8, 8, 8, 0.97) !important;
+      border-color: #222 !important;
     }
 
     /* Header logo: hidden at top, slides in on scroll */
@@ -281,7 +322,7 @@
             </svg>
           </button>
           <a href="#pricing"
-            class="hidden md:inline-flex items-center gap-1 bg-[#E85542] text-white text-sm font-black px-5 py-2 hover:bg-[#ef6b5a] transition-colors tracking-tight"
+            class="hidden md:inline-flex btn-apex-solid text-sm px-5 py-2"
             data-i18n="nav.cta">查看方案 ↗</a>
 
           <!-- Mobile hamburger -->
@@ -374,13 +415,12 @@
     </a>
 
     <!-- CTAs -->
-    <div class="flex flex-col sm:flex-row gap-3 justify-center">
-      <a href="#pricing"
-         class="inline-flex items-center justify-center gap-2 bg-[#E85542] text-white font-black px-8 py-4 text-base hover:bg-[#ef6b5a] transition-colors"
-         data-i18n="hero.cta1">选择方案，立即开始 ↗</a>
-      <a href="#scenarios"
-         class="inline-flex items-center justify-center gap-2 border border-[#333] text-white font-bold px-8 py-4 text-base hover:border-white transition-colors"
-         data-i18n="hero.cta2">看看能做什么</a>
+    <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+      <a href="#pricing" class="btn-apex-solid" data-i18n="hero.cta1">立即开始 ↗</a>
+      <a href="#scenarios" class="btn-apex-ghost" data-i18n="hero.cta2">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        看看能做什么
+      </a>
     </div>
   </section>
 
@@ -1066,13 +1106,9 @@
       <p class="text-[#444] text-sm mb-10" data-i18n-html="cta.note">
         不知道怎么弄？<a href="/faq" class="underline hover:text-white">看常见问题</a>，或直接找我们聊。
       </p>
-      <div class="flex flex-col sm:flex-row gap-4 justify-center">
-        <a href="#pricing"
-           class="bg-[#E85542] text-white font-black px-10 py-4 text-base hover:bg-[#ef6b5a] transition-colors"
-           data-i18n="cta.btn1">选择方案，立即开始 ↗</a>
-        <a href="https://t.me/dazhaxi" target="_blank"
-           class="border border-[#222] text-white font-black px-10 py-4 text-base hover:border-white transition-colors"
-           data-i18n="cta.btn2">💬 先聊聊再决定</a>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+        <a href="#pricing" class="btn-apex-solid" data-i18n="cta.btn1">选择方案 ↗</a>
+        <a href="https://t.me/dazhaxi" target="_blank" class="btn-apex" data-i18n="cta.btn2">💬 先聊聊再决定</a>
       </div>
     </div>
   </section>
