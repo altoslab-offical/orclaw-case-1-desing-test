@@ -8,6 +8,7 @@
   <!-- Tailwind: 國內可用 CDN（npmmirror） -->
   <link rel="stylesheet" href="/static/css/tailwind.min.css">
   <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.loli.net/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap"><noscript><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap"></noscript>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@700;800;900&display=swap">
   <!-- 字體：Noto Sans SC 用國內 CDN；Space Grotesk fallback 到系統字體 -->
   <!-- fallback：如果上面 CDN 失敗也能正常顯示 -->
   
@@ -217,6 +218,46 @@
     .wave-bar:nth-child(15) { animation: waveBar 1.2s ease-in-out 0.75s infinite; }
     .wave-bar:nth-child(16) { animation: waveBar 1.2s ease-in-out 0.85s infinite; }
 
+    /* ── Condensed display headline (Monolith-style) ── */
+    .headline-condensed {
+      font-family: 'Bebas Neue', 'Barlow Condensed', 'Space Grotesk', sans-serif;
+      line-height: 0.88;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+    .hero-h1 {
+      font-size: clamp(3.5rem, 6.5vw, 8rem);
+    }
+    .hero-h1-line2 {
+      font-size: clamp(3.5rem, 6.5vw, 8rem);
+      color: #E85542;
+    }
+    .status-mono {
+      font-family: 'Space Grotesk', ui-monospace, monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    /* Right panel border glow */
+    .hero-panel {
+      border: 1px solid #2a3040;
+      background: #111827;
+      position: relative;
+      box-shadow: 0 0 0 1px rgba(232,85,66,0.15), inset 0 1px 0 rgba(255,255,255,0.04);
+    }
+    .hero-panel-corner-tr {
+      position: absolute; top: -1px; right: -1px;
+      width: 24px; height: 24px;
+      border-top: 2px solid #E85542;
+      border-right: 2px solid #E85542;
+    }
+    .hero-panel-corner-bl {
+      position: absolute; bottom: -1px; left: -1px;
+      width: 24px; height: 24px;
+      border-bottom: 2px solid #E85542;
+      border-left: 2px solid #E85542;
+    }
+
     /* Gradient shift text effect (inspired by openclaw) */
     @keyframes gradientShift {
       0%, 100% { background-position: 0% 50%; }
@@ -330,48 +371,119 @@
   <div id="drawer-overlay" class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
 
   <!-- ═══════════════════════════════════════════════════════════
-       HERO — openclaw-style centered layout
+       HERO — Monolith-style two-column layout
   ════════════════════════════════════════════════════════════ -->
-  <section class="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-4 pt-24 pb-20 border-b border-[#1a1a1a]">
+  <section class="relative z-10 min-h-screen flex items-center border-b border-[#1a1a1a] px-4 pt-24 pb-16">
+    <div class="max-w-7xl mx-auto w-full items-center" style="display:grid;grid-template-columns:3fr 2fr;gap:3rem;align-items:center;">
 
-    <!-- Badges row (centered) -->
-    <div class="flex items-center justify-center gap-3 mb-10">
-      <span class="flex items-center gap-2 text-xs font-bold text-[#555] tracking-[0.2em] uppercase">
-        <span class="w-4 h-px bg-[#333]"></span>
-        Decentralized AI Agent
-      </span>
-      <span class="flex items-center gap-2 border border-[#1e2433] px-3 py-1.5 text-xs text-[#555]">
-        <svg class="w-3.5 h-3.5 text-[#C8FF00]" viewBox="0 0 24 24" fill="currentColor"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-        Chat Bot
-      </span>
-    </div>
+      <!-- ── LEFT: Text block ── -->
+      <div>
+        <!-- Status line -->
+        <div class="flex items-center gap-3 mb-8">
+          <span class="w-2 h-2 rounded-full bg-[#E85542] animate-pulse flex-shrink-0"></span>
+          <span class="status-mono text-[#555]">SYSTEM_STATUS: OPERATIONAL</span>
+          <span class="w-12 h-px bg-[#1e2433] flex-shrink-0"></span>
+          <span class="status-mono text-[#333]">CLAW_CLOUD_v2</span>
+        </div>
 
+        <!-- Main headline — Bebas Neue condensed, hardcoded for layout stability -->
+        <div class="mb-6 leading-none">
+          <div class="headline-condensed hero-h1 text-white">STORM SEASON.</div>
+          <div class="headline-condensed hero-h1-line2">CRAB SEASON.</div>
+        </div>
 
-    <!-- Brand name (large, centered) -->
-    <!-- Main headline -->
-    <h1 class="gradient-shift text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight mb-7" data-i18n-html="hero.h1">风浪越大，蟹越贵</h1>
+        <!-- Description -->
+        <p class="text-[#8899aa] text-sm sm:text-base leading-relaxed mb-10 max-w-md border-l-2 border-[#E85542]/40 pl-4" data-i18n-html="hero.sub">
+          Your AI organizes everything — and delivers it to your messaging app.<br>
+          <span class="font-semibold text-white">Cloud-deployed, running 24/7.</span>
+        </p>
 
-    <!-- Description -->
-    <p class="text-[#8899aa] text-base sm:text-lg leading-relaxed mb-8 max-w-[520px]" data-i18n-html="hero.sub">
-      当别人还在手动查资料，<br>你的 AI 已经整理好放在通讯软件里等你。<br>
-      <span class="font-semibold text-white">专属云端部署，24 小时不间断。</span>
-    </p>
+        <!-- CTAs -->
+        <div class="flex flex-col sm:flex-row gap-3">
+          <a href="#pricing"
+             class="inline-flex items-center justify-center gap-2 bg-[#E85542] text-white font-black px-8 py-4 text-sm tracking-widest uppercase hover:bg-[#ef6b5a] transition-colors"
+             data-i18n="hero.cta1">Get Started ↗</a>
+          <a href="#scenarios"
+             class="inline-flex items-center justify-center gap-2 border border-[#333] text-[#888] font-bold px-8 py-4 text-sm tracking-widest uppercase hover:border-white hover:text-white transition-colors"
+             data-i18n="hero.cta2">See What It Can Do</a>
+        </div>
+      </div>
 
-    <!-- Trending pill (like openclaw's NEW announcement badge) -->
-    <a href="#scenarios" class="inline-flex items-center gap-3 border border-[#1e2433] bg-[#141820]/70 px-5 py-2.5 rounded-full mb-8 hover:border-[#E85542]/60 transition-colors group">
-      <span class="bg-[#E85542] text-white text-[10px] font-black px-2 py-0.5 rounded-full tracking-widest uppercase" data-i18n="hero.trending">热门</span>
-      <span class="text-[#8899aa] text-sm group-hover:text-white transition-colors" data-i18n="hero.trending.desc">专属 AI，住在你的通讯软件里</span>
-      <svg class="w-3.5 h-3.5 text-[#555] group-hover:text-[#E85542] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-    </a>
+      <!-- ── RIGHT: Visual panel ── -->
+      <div>
+        <div class="hero-panel overflow-hidden">
+          <!-- Panel header -->
+          <div class="bg-[#080808] border-b border-[#1e2433] px-4 py-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[#E85542]"></span>
+              <span class="status-mono text-[#555]">MY_CLAW_CLOUD</span>
+            </div>
+            <span class="status-mono text-[#E85542]">● ONLINE</span>
+          </div>
 
-    <!-- CTAs -->
-    <div class="flex flex-col sm:flex-row gap-3 justify-center">
-      <a href="#pricing"
-         class="inline-flex items-center justify-center gap-2 bg-[#E85542] text-white font-black px-8 py-4 text-base hover:bg-[#ef6b5a] transition-colors"
-         data-i18n="hero.cta1">选择方案，立即开始 ↗</a>
-      <a href="#scenarios"
-         class="inline-flex items-center justify-center gap-2 border border-[#333] text-white font-bold px-8 py-4 text-base hover:border-white transition-colors"
-         data-i18n="hero.cta2">看看能做什么</a>
+          <!-- Panel body: chat stream -->
+          <div class="bg-[#0b0e14] px-4 py-5 space-y-4 min-h-80">
+            <!-- Auto-push timestamp -->
+            <div class="text-center msg-1">
+              <span class="status-mono text-[#333] bg-[#0f1520] border border-[#1e2433] px-3 py-1" data-i18n="hero.chat.time">⏰ 08:00 AM · AUTO-DELIVERED</span>
+            </div>
+
+            <!-- Morning brief -->
+            <div class="flex gap-3 items-start msg-2">
+              <div class="w-7 h-7 bg-[#E85542]/10 border border-[#E85542]/30 flex items-center justify-center text-xs flex-shrink-0">🦀</div>
+              <div class="bg-[#141820] border border-[#1e2433] px-3 py-2.5 text-sm max-w-[85%]">
+                <p class="font-black text-[#E85542] mb-2 status-mono" data-i18n="hero.chat.report.title">MORNING_BRIEF</p>
+                <p class="text-[#aaa] text-xs" data-i18n="hero.chat.report.stock">↑ S&P 500  +1.2%</p>
+                <p class="text-[#aaa] text-xs" data-i18n="hero.chat.report.btc">BTC $67,200 (+1.8%)</p>
+                <p class="text-[#aaa] text-xs" data-i18n="hero.chat.report.weather">NYC 22°C, Clear</p>
+                <p class="status-mono text-[#333] mt-2">08:00 ✓✓</p>
+              </div>
+            </div>
+
+            <!-- Price alert -->
+            <div class="flex gap-3 items-start msg-3">
+              <div class="w-7 h-7 bg-[#E85542]/10 border border-[#E85542]/30 flex items-center justify-center text-xs flex-shrink-0">🦀</div>
+              <div class="bg-[#141820] border border-[#E85542]/30 px-3 py-2.5 text-sm max-w-[85%]">
+                <p class="status-mono text-[#E85542] mb-1" data-i18n="hero.chat.alert.title">PRICE_ALERT ⚡</p>
+                <p class="text-[#aaa] text-xs" data-i18n="hero.chat.alert.eth">ETH broke $21,000 ↓</p>
+                <p class="text-[#aaa] text-xs" data-i18n="hero.chat.alert.price">Now: $20,840 (−3.2%)</p>
+                <p class="status-mono text-[#333] mt-2">10:23 ✓✓</p>
+              </div>
+            </div>
+
+            <!-- User msg -->
+            <div class="flex justify-end msg-4">
+              <div class="bg-[#1e2433] border border-[#263040] px-3 py-2.5 text-sm max-w-[80%]">
+                <p class="text-white text-xs" data-i18n="hero.chat.usermsg">Should I sell? Analyze it.</p>
+                <p class="status-mono text-[#333] mt-1 text-right">10:24 ✓✓</p>
+              </div>
+            </div>
+
+            <!-- AI reply -->
+            <div class="flex gap-3 items-start msg-5">
+              <div class="w-7 h-7 bg-[#E85542]/10 border border-[#E85542]/30 flex items-center justify-center text-xs flex-shrink-0">🦀</div>
+              <div class="bg-[#141820] border border-[#1e2433] px-3 py-2.5 text-sm max-w-[85%]">
+                <p class="text-[#aaa] text-xs" data-i18n="hero.chat.analysis.rsi">RSI 32 (oversold), MACD diverging</p>
+                <p class="text-[#E85542] font-black text-xs mt-1" data-i18n="hero.chat.analysis.rec">Rec: Hold. Stop-loss at $19,500</p>
+                <p class="status-mono text-[#333] mt-2">10:24 ✓✓</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input bar -->
+          <div class="bg-[#080808] border-t border-[#1e2433] px-3 py-2.5 flex items-center gap-2">
+            <div class="flex-1 bg-[#0b0e14] border border-[#1e2433] px-3 py-2 status-mono text-[#333]" data-i18n="hero.chat.input">MESSAGE_CLAW_CLOUD…</div>
+            <button class="w-8 h-8 bg-[#E85542] flex items-center justify-center text-white hover:bg-[#ef6b5a] transition-colors">
+              <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+          </div>
+
+          <!-- Corner accents (Monolith-style) -->
+          <div class="hero-panel-corner-tr"></div>
+          <div class="hero-panel-corner-bl"></div>
+        </div>
+      </div>
+
     </div>
   </section>
 
