@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/static/css/tailwind.min.css">
   <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.loli.net/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap"><noscript><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap"></noscript>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@700;800;900&display=swap">
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest/dist/hls.min.js"></script>
   <!-- 字體：Noto Sans SC 用國內 CDN；Space Grotesk fallback 到系統字體 -->
   <!-- fallback：如果上面 CDN 失敗也能正常顯示 -->
   
@@ -220,10 +221,11 @@
 
     /* ── Condensed display headline (Monolith-style) ── */
     .headline-condensed {
-      font-family: 'Bebas Neue', 'Barlow Condensed', 'Space Grotesk', sans-serif;
+      font-family: 'Bebas Neue', 'Barlow Condensed', 'Noto Sans SC', 'Space Grotesk', sans-serif;
       line-height: 0.88;
       letter-spacing: 0.03em;
       text-transform: uppercase;
+      font-weight: 900;
     }
     .hero-h1 {
       font-size: clamp(3.5rem, 6.5vw, 8rem);
@@ -286,7 +288,7 @@
       <div class="flex items-center justify-between h-14">
 
         <!-- Logo (hidden at top, appears on scroll) -->
-        <a id="header-logo" href="#" class="select-none tracking-tight"><span class="text-white font-black text-xl tracking-widest uppercase">CLAW CLOUD</span></a>
+        <a id="header-logo" href="#" class="select-none" style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:1.6rem;letter-spacing:0.08em;color:white;line-height:1;">CLAW CLOUD</a>
 
         <!-- Desktop Nav -->
         <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-[#666]">
@@ -374,7 +376,19 @@
        HERO — Monolith-style two-column layout
   ════════════════════════════════════════════════════════════ -->
   <section class="relative z-10 min-h-screen flex items-center border-b border-[#1a1a1a] px-4 pt-24 pb-16">
-    <div class="max-w-7xl mx-auto w-full items-center" style="display:grid;grid-template-columns:3fr 2fr;gap:3rem;align-items:center;">
+    <!-- Background video -->
+    <video id="hero-video" autoplay loop muted playsinline
+      style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none;z-index:0;"></video>
+    <!-- Dark overlay: left heavy (text readable) → right lighter (chat panel shows video) -->
+    <div style="position:absolute;inset:0;z-index:1;pointer-events:none;
+      background:linear-gradient(to right,
+        rgba(4,4,6,0.92) 0%,
+        rgba(4,4,6,0.80) 45%,
+        rgba(4,4,6,0.55) 100%);"></div>
+    <!-- Bottom fade to black -->
+    <div style="position:absolute;bottom:0;left:0;right:0;height:160px;z-index:1;pointer-events:none;
+      background:linear-gradient(to bottom, transparent, rgba(4,4,6,0.95));"></div>
+    <div class="max-w-7xl mx-auto w-full items-center" style="display:grid;grid-template-columns:3fr 2fr;gap:3rem;align-items:center;position:relative;z-index:2;">
 
       <!-- ── LEFT: Text block ── -->
       <div>
@@ -388,14 +402,13 @@
 
         <!-- Main headline — Bebas Neue condensed, hardcoded for layout stability -->
         <div class="mb-6 leading-none">
-          <div class="headline-condensed hero-h1 text-white">STORM SEASON.</div>
-          <div class="headline-condensed hero-h1-line2">CRAB SEASON.</div>
+          <div class="headline-condensed hero-h1 text-white" data-i18n="hero.h1.line1">STORM SEASON.</div>
+          <div class="headline-condensed hero-h1-line2" data-i18n="hero.h1.line2">CRAB SEASON.</div>
         </div>
 
         <!-- Description -->
         <p class="text-[#8899aa] text-sm sm:text-base leading-relaxed mb-10 max-w-md border-l-2 border-[#E85542]/40 pl-4" data-i18n-html="hero.sub">
-          Your AI organizes everything — and delivers it to your messaging app.<br>
-          <span class="font-semibold text-white">Cloud-deployed, running 24/7.</span>
+          Your AI organizes everything — and delivers it to your messaging app.
         </p>
 
         <!-- CTAs -->
@@ -1283,6 +1296,8 @@
         'hero.trending':'热门推荐',
         'hero.trending.desc':'专属 AI，住在你的通讯软件里',
         'hero.h1':'风浪越大，蟹越贵',
+        'hero.h1.line1':'风浪越大',
+        'hero.h1.line2':'鱼越贵。',
         'hero.sub':'当别人还在手动查资料，<br>你的 AI 已经整理好放在通讯软件里等你。<br><span class="font-semibold text-white">专属云端部署，24 小时不间断。</span>',
         'hero.cta1':'选择方案，立即开始 ↗','hero.cta2':'看看能做什么',
         'hero.chat.name':'我的CLAW CLOUD','hero.chat.online':'● 线上中',
@@ -1417,7 +1432,9 @@
         'hero.trending':'TRENDING',
         'hero.trending.desc':'Your personal AI, living in your messaging app',
         'hero.h1':'Storm Season.<br><span class="lime">Crab Season.</span>',
-        'hero.sub':'Your AI organizes everything — and delivers it to your messaging app.<br><span class="font-semibold text-white">Cloud-deployed, running 24/7.</span>',
+        'hero.h1.line1':'STORM SEASON.',
+        'hero.h1.line2':'CRAB SEASON.',
+        'hero.sub':'Your AI organizes everything — and delivers it to your messaging app.',
         'hero.cta1':'Get Started Now ↗','hero.cta2':'See What It Can Do',
         'hero.chat.name':'My CLAW CLOUD','hero.chat.online':'● Online',
         'hero.chat.time':'⏰ 08:00 AM · Auto-delivered',
@@ -1695,6 +1712,55 @@
       }
       resize(); init(); draw();
       window.addEventListener('resize', function() { resize(); init(); });
+    })();
+
+    // ── Hero background video (HLS) ──────────────────────────────
+    (function() {
+      const video = document.getElementById('hero-video');
+      if (!video) return;
+      const src = 'https://stream.mux.com/hUT6X11m1Vkw1QMxPOLgI761x2cfpi9bHFbi5cNg4014.m3u8';
+
+      // Smooth loop: fade out near end, manual restart with fade-in
+      video.removeAttribute('loop'); // handle loop manually for smooth crossfade
+      video.style.transition = 'opacity 0.7s ease';
+      video.style.opacity = '0';
+      let fadingOut = false;
+
+      video.addEventListener('playing', function() {
+        video.style.opacity = '1';
+        fadingOut = false;
+      });
+      video.addEventListener('timeupdate', function() {
+        if (!video.duration) return;
+        const remaining = video.duration - video.currentTime;
+        if (remaining < 0.8 && !fadingOut) {
+          fadingOut = true;
+          video.style.opacity = '0';
+        }
+      });
+      video.addEventListener('ended', function() {
+        fadingOut = false;
+        video.currentTime = 0;
+        video.play().catch(function(){});
+        // opacity fades back in via 'playing' event
+      });
+
+      if (typeof Hls !== 'undefined' && Hls.isSupported()) {
+        const hls = new Hls({
+          autoStartLoad: true,
+          startLevel: -1,          // auto quality
+          capLevelToPlayerSize: false,
+          maxBufferLength: 30,
+        });
+        hls.loadSource(src);
+        hls.attachMedia(video);
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+          video.play().catch(function(){});
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = src;
+        video.play().catch(function(){});
+      }
     })();
   </script>
 
