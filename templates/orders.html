@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}订单列表 — 大闸蟹后台{% endblock %}
+{% block page_title %}控制台{% endblock %}
+
+{% block content %}
+
+<!-- ── 统计卡片 ── -->
+<div class="stats-grid">
+  <a href="{{ url_for('index') }}" style="text-decoration:none">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#eef2ff;">📦</div>
+      <div class="num">{{ stats.total }}</div>
+      <div class="label">全部订单</div>
+    </div>
+  </a>
+  <a href="{{ url_for('index', status='active') }}" style="text-decoration:none">
+    <div class="stat-card active-stat">
+      <div class="stat-icon" style="background:#dcfce7;">✅</div>
+      <div class="num">{{ stats.active }}</div>
+      <div class="label">运行中</div>
+    </div>
+  </a>
+  <a href="{{ url_for('index', status='waiting_user') }}" style="text-decoration:none">
+    <div class="stat-card waiting-stat">
+      <div class="stat-icon" style="background:#f3e8ff;">⏳</div>
+      <div class="num">{{ stats.waiting_user }}</div>
+      <div class="label">等待用户</div>
+    </div>
+  </a>
+  <a href="{{ url_for('index', status='pending') }}" style="text-decoration:none">
+    <div class="stat-card pending-stat">
+      <div class="stat-icon" style="background:#fef9c3;">🕐</div>
+      <div class="num">{{ stats.pending }}</div>
+      <div class="label">待部署</div>
+    </div>
+  </a>
+  <a href="{{ url_for('index', status='deploying') }}" style="text-decoration:none">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:#dbeafe;">🚀</div>
+      <div class="num">{{ stats.deploying }}</div>
+      <div class="label">部署中</div>
+    </div>
+  </a>
+  <a href="{{ url_for('index', status='stopped') }}" style="text-decoration:none">
+    <div class="stat-card stopped-stat">
+      <div class="stat-icon" style="background:#f1f5f9;">⏸</div>
+      <div class="num">{{ stats.stopped }}</div>
+      <div class="label">已停机</div>
+    </div>
+  </a>
+</div>
+
+<!-- ── 筛选栏 ── -->
+<div class="card" style="padding: 16px 22px; margin-bottom: 18px;">
+  <form method="GET" action="{{ url_for('index') }}"
+        style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <input class="form-control" style="width:260px" type="text"
+           name="search" placeholder="搜索订单号、备注、用户ID..."
+           value="{{ current_search }}">
+    <select class="form-control" style="width:150px" name="status">
+      <option value="">全部状态</option>
+      {% for s in ['pending','deploying','waiting_user','active','expiring','stopped','terminated'] %}
+        <option value="{{ s }}" {% if current_status == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select class="form-control" style="width:140px" name="channel">
+      <option value="">全部渠道</option>
+      <option value="telegram" {% if current_channel == 'telegram' %}selected{% endif %}>Telegram</option>
+      <option value="qq"       {% if current_channel == 'qq'       %}selected{% endif %}>QQ</option>
+      <option value="feishu"   {% if current_channel == 'feishu'   %}selected{% endif %}>飞书</option>
+      <option value="wechat"   {% if current_channel == 'wechat'   %}selected{% endif %}>微信</option>
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm">筛选</button>
+    <a href="{{ url_for('index') }}" class="btn btn-default btn-sm">清除</a>
+    <a href="{{ url_for('order_create') }}" class="btn btn-success" style="margin-left:auto">+ 新建订单</a>
+  </form>
+</div>
+
+<!-- ── 订单列表 ── -->
+<div class="card" style="padding:0">
+  <div class="flex-between" style="padding:16px 22px; border-bottom:1px solid #f1f5f9;">
+    <span style="font-weight:700; color:#0f172a; font-size:14px;">订单列表</span>
+    <span class="text-muted">共 {{ total_count }} 条 &middot; 第 {{ page }}/{{ total_pages }} 页</span>
+  </div>
+
+  {% if orders %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>订单编号</th>
+          <th>套餐</th>
+          <th>渠道</th>
+          <th>IP 地址</th>
+          <th>状态</th>
+          <th>到期日</th>
+          <th>账单日</th>
+          <th>备注</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for o in orders %}
+        <tr>
+          <td>
+            <a href="{{ url_for('order_detail', order_id=o.order_id) }}" class="mono" style="font-weight:600;">{{ o.order_id }}</a>
+            {% if o.purchase_token %}
+              <span style="display:inline-block; font-size:10px; background:#ede9fe; color:#7c3aed; border-radius:4px; padding:1px 6px; margin-left:4px; vertical-align:middle; font-weight:600;">自助</span>
+            {% endif %}
+          </td>
+          <td>
+            <strong>{{ o.plan or '—' }}</strong>
+            <div class="text-muted">{{ o.ec2_type or '' }}</div>
+          </td>
+          <td>
+            <span class="badge badge-{{ o.channel or 'default' }}">
+              {{ o.channel | upper if o.channel else '—' }}
+            </span>
+          </td>
+          <td class="mono">{{ o.public_ip or '—' }}</td>
+          <td>
+            <span class="badge {{ o.status | status_badge }}">{{ o.status or '—' }}</span>
+          </td>
+          <td>
+            {% if o._days_left is not none %}
+              {{ o.expiry_date | short_date }}
+              {% if o._days_left < 0 %}
+                <div class="text-danger" style="font-size:11px">已过期 {{ o._days_left | abs }} 天</div>
+              {% elif o._days_left <= 3 %}
+                <div class="text-warn" style="font-size:11px">剩余 {{ o._days_left }} 天</div>
+              {% else %}
+                <div class="text-muted" style="font-size:11px">剩余 {{ o._days_left }} 天</div>
+              {% endif %}
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+          <td>{{ o.next_billing_date | short_date }}</td>
+          <td style="max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"
+              title="{{ o.notes }}">
+            {{ o.notes or '—' }}
+          </td>
+          <td style="white-space:nowrap;">
+            <a href="{{ url_for('order_detail', order_id=o.order_id) }}"
+               class="btn btn-default btn-sm">查看</a>
+            <form method="POST"
+                  action="{{ url_for('order_action', order_id=o.order_id) }}"
+                  style="display:inline;"
+                  onsubmit="return confirm('确认删除订单 {{ o.order_id }}？\n此操作不可恢复。')">
+              <input type="hidden" name="action" value="delete">
+              <button class="btn btn-danger btn-sm" type="submit" style="margin-left:4px;">删除</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+    <div style="text-align:center; padding:60px 20px; color:#94a3b8;">
+      <div style="font-size:40px; margin-bottom:12px; opacity:.6;">📋</div>
+      <div style="font-size:15px; font-weight:600; color:#64748b;">没有符合条件的订单</div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- ── 分页 ── -->
+{% if total_pages > 1 %}
+<div class="pagination">
+  {% if page > 1 %}
+    <a href="{{ url_for('index', page=page-1, status=current_status, channel=current_channel, search=current_search) }}">&laquo;</a>
+  {% endif %}
+  {% for p in range(1, total_pages+1) %}
+    {% if p == page %}
+      <span class="current">{{ p }}</span>
+    {% elif p <= 3 or p >= total_pages-2 or (p >= page-2 and p <= page+2) %}
+      <a href="{{ url_for('index', page=p, status=current_status, channel=current_channel, search=current_search) }}">{{ p }}</a>
+    {% elif p == 4 or p == total_pages-3 %}
+      <span>…</span>
+    {% endif %}
+  {% endfor %}
+  {% if page < total_pages %}
+    <a href="{{ url_for('index', page=page+1, status=current_status, channel=current_channel, search=current_search) }}">&raquo;</a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

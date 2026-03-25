@@ -1,0 +1,65 @@
+{% extends "system_base.html" %}
+
+{% block title %}{{ 'Bind your ORCLAW' if lang == 'en' else '绑定你的大闸蟹' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  @keyframes pulse-dot { 0%,100%{opacity:.3} 50%{opacity:1} }
+  .dot-1 { animation: pulse-dot 1.4s infinite 0s; }
+  .dot-2 { animation: pulse-dot 1.4s infinite .2s; }
+  .dot-3 { animation: pulse-dot 1.4s infinite .4s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center p-6 min-h-screen">
+  <div class="max-w-md w-full text-center">
+    <div class="text-6xl mb-4">🦀</div>
+    <h1 class="text-2xl font-black mb-2">{{ 'Binding your ORCLAW' if lang == 'en' else '绑定你的大闸蟹' }}</h1>
+    <p id="statusMsg" class="text-sm mb-8" style="color: var(--text-2);">
+      {{ 'Binding' if lang == 'en' else '正在绑定' }}<span class="dot-1">.</span><span class="dot-2">.</span><span class="dot-3">.</span>
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+  var LANG = {{ lang | tojson }};
+  var token = {{ bind_token | tojson }};
+  var statusMsg = document.getElementById('statusMsg');
+
+  var L = {
+    zh: { success: '绑定成功，正在进入聊天...', fail: '绑定失败，请重试', net_err: '网络错误，请重试' },
+    en: { success: 'Binding successful, entering chat...', fail: 'Binding failed, please retry', net_err: 'Network error, please retry' }
+  };
+  var t = L[LANG] || L.zh;
+
+  fetch('/api/wechat/test-bind', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({bind_token: token})
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.status === 'ok' && data.session_token) {
+      statusMsg.textContent = t.success;
+      statusMsg.style.color = 'var(--success)';
+      var chatUrl = '/wechat/chat?token=' +
+        encodeURIComponent(data.session_token) +
+        '&ws=' + encodeURIComponent(data.ws_url) +
+        '&lang=' + LANG;
+      setTimeout(function() { window.location.href = chatUrl; }, 800);
+    } else {
+      statusMsg.textContent = data.error || t.fail;
+      statusMsg.style.color = 'var(--accent)';
+    }
+  })
+  .catch(function() {
+    statusMsg.textContent = t.net_err;
+    statusMsg.style.color = 'var(--accent)';
+  });
+})();
+</script>
+{% endblock %}

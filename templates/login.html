@@ -1,0 +1,102 @@
+{% extends "system_base.html" %}
+
+{% block title %}大閘蟹 後台登入{% endblock %}
+
+{% block extra_css %}
+<style>
+  .login-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xl);
+    padding: 40px 36px 36px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5);
+  }
+
+  .login-logo {
+    width: 56px;
+    height: 56px;
+    background: var(--elevated);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--r-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 20px;
+  }
+
+  .login-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-1);
+    text-align: center;
+    letter-spacing: 0.02em;
+    margin-bottom: 6px;
+  }
+
+  .login-subtitle {
+    font-size: 13px;
+    color: var(--text-3);
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .login-form-group {
+    margin-bottom: 20px;
+  }
+
+  .login-footer {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-4);
+    margin-top: 20px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="login-wrap">
+  <div class="login-card">
+
+    <div class="login-logo">🦞</div>
+
+    <h1 class="login-title">大閘蟹 管理後台</h1>
+    <p class="login-subtitle">請輸入管理員密碼以繼續</p>
+
+    <form method="post">
+      <div class="login-form-group">
+        <label class="s-label">管理員密碼</label>
+        <input
+          class="s-input"
+          type="password"
+          name="password"
+          placeholder="••••••••"
+          autofocus
+          autocomplete="current-password"
+        >
+      </div>
+
+      {% for msg in get_flashed_messages() %}
+      <div class="s-flash s-flash-error" style="margin-bottom:16px;">{{ msg }}</div>
+      {% endfor %}
+
+      <button type="submit" class="s-btn s-btn-primary s-btn-full s-btn-lg">
+        登入
+      </button>
+    </form>
+
+    <p class="login-footer">大閘蟹 雲端管理系統</p>
+
+  </div>
+</div>
+{% endblock %}

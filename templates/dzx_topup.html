@@ -1,0 +1,117 @@
+{% extends "system_base.html" %}
+
+{% block title %}AI 充值 — 大闸蟹{% endblock %}
+
+{% block extra_css %}
+<style>
+  .credit-card {
+    position: relative;
+    border: 2px solid #1e2433; border-radius: 12px;
+    padding: 18px 12px; cursor: pointer; transition: all .2s; text-align: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 120px;
+  }
+  .credit-card:hover { border-color: #07C160; background: #0d1a15; }
+  .credit-card.selected { border-color: #07C160; background: #0a1f12; }
+  .credit-card .price { font-size: 26px; font-weight: 900; color: #fff; }
+  .credit-card .sub { font-size: 11px; color: #666; margin-top: 4px; white-space: nowrap; }
+  .credit-card .badge {
+    position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+    background: #07C160; color: #fff;
+    font-size: 10px; font-weight: 700; padding: 2px 10px;
+    border-radius: 20px; white-space: nowrap;
+  }
+  .balance-bar { background: #1e2433; border-radius: 99px; height: 8px; overflow: hidden; }
+  .balance-fill { background: linear-gradient(90deg, #07C160, #4ade80); height: 100%; border-radius: 99px; transition: width 1s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center p-5 min-h-screen">
+  <div class="w-full max-w-md">
+    <!-- Header -->
+    <div class="text-center mb-7">
+      <div class="text-5xl mb-3">🦀</div>
+      <h1 class="text-2xl font-black">AI 充值</h1>
+      <p class="text-gray-500 text-sm mt-1">为你的大闸蟹 AI 补充能量</p>
+    </div>
+
+    <!-- Balance display -->
+    <div class="s-card p-6 mb-5">
+      <div class="flex justify-between items-start mb-3">
+        <div>
+          <div class="text-sm text-gray-400">当前 AI 余额</div>
+          <div class="text-3xl font-black mt-1" id="balanceDisplay">
+            {% if balance_usd %}
+              ≈ ¥{{ "%.0f"|format(balance_usd * 7.3) }}
+            {% else %}
+              ¥0
+            {% endif %}
+          </div>
+          <div class="text-xs text-gray-600 mt-0.5">
+            ${{ "%.4f"|format(balance_usd or 0) }} USD · 约 {{ "{:,}".format(((balance_usd or 0) / 0.000014)|int) }} 次对话
+          </div>
+        </div>
+        <div class="text-right">
+          <div class="text-xs text-gray-500">订单号</div>
+          <div class="text-xs text-gray-300 mt-0.5">{{ order_id_short }}</div>
+        </div>
+      </div>
+      <div class="balance-bar">
+        <div class="balance-fill" id="balanceBar" style="width: {{ [[(balance_usd or 0) / 0.014 * 100, 5]|max, 100]|min }}%"></div>
+      </div>
+      {% if (balance_usd or 0) < 0.5 %}
+      <p class="text-xs text-red-400 mt-2">⚠️ 余额不足，AI 可能已停止响应</p>
+      {% endif %}
+    </div>
+
+    <!-- Credit selection -->
+    <div class="s-card p-6 mb-5">
+      <h2 class="font-bold text-base mb-1">选择充值金额</h2>
+      <p class="text-xs text-gray-500 mb-4">充值后立即生效，余额长期有效</p>
+
+      <div class="grid grid-cols-3 gap-3" id="creditGrid">
+        <div class="credit-card" data-value="50" onclick="selectCredit(50)">
+          <div class="price">¥50</div>
+          <div class="sub">+3,000 次</div>
+        </div>
+        <div class="credit-card selected" data-value="100" onclick="selectCredit(100)">
+          <div class="badge">推荐</div>
+          <div class="price">¥100</div>
+          <div class="sub">+7,000 次</div>
+        </div>
+        <div class="credit-card" data-value="200" onclick="selectCredit(200)">
+          <div class="price">¥200</div>
+          <div class="sub">+15,000 次</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pay button -->
+    <form action="/topup/confirm/{{ topup_token }}" method="POST">
+      <input type="hidden" name="amount_yuan" id="amountInput" value="100">
+      <button type="submit" class="s-btn s-btn-primary" style="width:100%;padding:16px;font-size:17px;letter-spacing:.5px;">
+        充值 ¥<span id="amountDisplay">100</span> →
+      </button>
+    </form>
+
+    <p class="text-center text-gray-700 text-xs mt-5">
+      充值金额不退款 · 余额永不过期 · 技术支持：大闸蟹客服
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var selected = 100;
+function selectCredit(val) {
+  selected = val;
+  document.getElementById('amountInput').value = val;
+  document.getElementById('amountDisplay').textContent = val;
+  document.querySelectorAll('.credit-card').forEach(function(el) {
+    el.classList.toggle('selected', parseInt(el.dataset.value) === val);
+  });
+}
+</script>
+{% endblock %}

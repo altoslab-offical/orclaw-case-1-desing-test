@@ -1,0 +1,1209 @@
+<!DOCTYPE html>
+<html lang="zh-HK" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VPS 安装教学 — 大闸蟹 AI 助理</title>
+  <meta name="description" content="从一台全新 VPS 到完整运行的大闸蟹 AI 助理，手把手完整安装教学。" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🦀</text></svg>">
+  <link rel="stylesheet" href="/static/css/tailwind.min.css">
+  <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.loli.net/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap"><noscript><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap"></noscript>
+  
+  <style>
+    * { font-family: 'Space Grotesk', 'Noto Sans SC', sans-serif; }
+    :root {
+      --lime: #E85542;
+      --orange: #FF6B35;
+      --black: #0b0e14;
+      --dark: #141820;
+      --card: #141820;
+      --border: #1e2433;
+      --gray: #8899aa;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: #0b0e14; color: #fff; }
+
+    /* ── Space theme overrides ── */
+    .bg-black { background-color: #0b0e14 !important; }
+    [class*="bg-[#0d0d0d]"] { background-color: #141820 !important; }
+    [class*="bg-[#080808]"] { background-color: #0f1520 !important; }
+    [class*="bg-[#111]"]    { background-color: #161d2a !important; }
+    [class*="border-[#1a1a1a]"] { border-color: #1e2433 !important; }
+    [class*="border-[#222]"]    { border-color: #1e2433 !important; }
+    [class*="border-[#333]"]    { border-color: #263040 !important; }
+
+    /* Nebula glow top-left */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px; left: -200px;
+      width: 800px; height: 800px;
+      background: radial-gradient(circle, rgba(232,85,66,0.10) 0%, transparent 65%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Rounded cards */
+    .card-hover { border-radius: 12px; overflow: hidden; }
+
+    /* Header: transparent at top, dark + logo on scroll */
+    header {
+      background-color: transparent !important;
+      border-color: transparent !important;
+      transition: background-color 0.4s ease, border-color 0.4s ease;
+    }
+    header.scrolled {
+      background-color: rgba(11, 14, 20, 0.97) !important;
+      border-color: #1e2433 !important;
+    }
+
+    /* Header logo: hidden at top, slides in on scroll */
+    #header-logo {
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
+    }
+    header.scrolled #header-logo {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    /* bg-black/opacity variants */
+    [class*="bg-black\/"] { background-color: rgba(11, 14, 20, var(--tw-bg-opacity, 0.95)) !important; }
+
+    /* Grid gap dividers */
+    [class*="bg-[#1a1a1a]"] { background-color: #1e2433 !important; }
+
+    /* Utility color classes (for i18n injected HTML) */
+    .lime { color: var(--lime); }
+    .orange { color: var(--orange); }
+
+    /* Marquee */
+    @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .marquee-track { display: flex; width: max-content; animation: marquee 28s linear infinite; }
+    .marquee-wrap { overflow: hidden; }
+    .marquee-wrap:hover .marquee-track { animation-play-state: paused; }
+
+    /* Scroll reveal */
+    .reveal { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* Card hover */
+    .card-hover { transition: transform 0.2s ease; }
+    .card-hover:hover { transform: translateY(-3px); }
+
+    /* Mobile drawer */
+    #mobile-menu { transform: translateX(100%); transition: transform 0.3s ease; }
+    #mobile-menu.open { transform: translateX(0); }
+
+    /* Header logo float */
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+    }
+    .logo-float { animation: logoFloat 2.8s ease-in-out infinite; }
+
+    /* Compare table zebra */
+    .compare-row:nth-child(even) { background: #0f1520; }
+
+    /* Dot pattern background */
+    .dot-bg {
+      background-image: radial-gradient(circle, #1e2433 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    /* Provider chip */
+    .provider-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 5px 12px;
+      background: #141820; font-size: 0.8rem; font-weight: 600; color: #8899aa;
+      border: 1px solid #1e2433; border-radius: 6px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .provider-chip:hover { background: #1e2433; color: #fff; }
+
+    /* Smooth star canvas fade */
+    #starfield { transition: opacity 0.5s ease; }
+
+    /* ── Light mode ──────────────────────────────────────────── */
+    html[data-theme="light"] body { background: #f5f4ef !important; color: #111111 !important; }
+    html[data-theme="light"] #starfield { opacity: 0; }
+    html[data-theme="light"] body::before { background: radial-gradient(circle, rgba(232,85,66,0.04) 0%, transparent 65%); }
+    html[data-theme="light"] header.scrolled { background-color: rgba(245,244,239,0.97) !important; border-color: #e2dfd6 !important; }
+
+    /* Backgrounds */
+    html[data-theme="light"] .bg-black { background-color: #f5f4ef !important; }
+    html[data-theme="light"] [class*="bg-[#0d0d0d]"] { background-color: #f0eeea !important; }
+    html[data-theme="light"] [class*="bg-[#080808]"] { background-color: #eeece5 !important; }
+    html[data-theme="light"] [class*="bg-[#111]"]    { background-color: #e8e5dc !important; }
+    html[data-theme="light"] [class*="bg-[#141820]"] { background-color: #f8f6f1 !important; }
+    html[data-theme="light"] [class*="bg-[#0f1520]"] { background-color: #eeece5 !important; }
+    html[data-theme="light"] [class*="bg-[#0b0e14]"] { background-color: #f5f4ef !important; }
+    html[data-theme="light"] [class*="bg-[#1a1a1a]"] { background-color: #e8e5dc !important; }
+    html[data-theme="light"] [class*="bg-[#060606]"] { background-color: #f0eeea !important; }
+    html[data-theme="light"] [class*="bg-[#161d2a]"] { background-color: #2d2d2d !important; }
+    html[data-theme="light"] [class*="bg-black\/"]   { background-color: rgba(245,244,239,0.6) !important; }
+
+    /* Borders */
+    html[data-theme="light"] [class*="border-[#1a1a1a]"] { border-color: #e2dfd6 !important; }
+    html[data-theme="light"] [class*="border-[#222]"]    { border-color: #e2dfd6 !important; }
+    html[data-theme="light"] [class*="border-[#333]"]    { border-color: #d5d2c8 !important; }
+    html[data-theme="light"] [class*="border-[#1e2433]"] { border-color: #e2dfd6 !important; }
+    html[data-theme="light"] [class*="border-[#263040]"] { border-color: #d0cdc4 !important; }
+
+    /* Text */
+    html[data-theme="light"] .text-white               { color: #111111 !important; }
+    html[data-theme="light"] [class*="text-white"]     { color: #111111 !important; }
+    html[data-theme="light"] [class*="text-gray-200"]  { color: #333333 !important; }
+    html[data-theme="light"] [class*="text-[#888]"]    { color: #666666 !important; }
+    html[data-theme="light"] [class*="text-[#8899aa]"] { color: #777777 !important; }
+    html[data-theme="light"] [class*="text-[#aaa]"]    { color: #555555 !important; }
+    html[data-theme="light"] [class*="text-[#666]"]    { color: #888888 !important; }
+    html[data-theme="light"] [class*="text-[#555]"]    { color: #999999 !important; }
+    html[data-theme="light"] [class*="text-[#444]"]    { color: #aaaaaa !important; }
+
+    /* Re-whitelist text ON coral/orange buttons */
+    html[data-theme="light"] [class*="bg-[#E85542]"] .text-white,
+    html[data-theme="light"] [class*="bg-[#E85542]"][class*="text-white"],
+    html[data-theme="light"] [class*="bg-[#ef6b5a]"][class*="text-white"],
+    html[data-theme="light"] [class*="bg-[#FF4D00]"][class*="text-white"] { color: #ffffff !important; }
+
+    /* Dot pattern, compare table, provider chips */
+    html[data-theme="light"] .dot-bg { background-image: radial-gradient(circle, #d0cdc4 1px, transparent 1px) !important; }
+    html[data-theme="light"] .compare-row:nth-child(even) { background: #eeece5 !important; }
+    html[data-theme="light"] .provider-chip { background: #f0eeea !important; border-color: #e2dfd6 !important; color: #666 !important; }
+    html[data-theme="light"] .provider-chip:hover { background: #e5e2d8 !important; color: #111 !important; }
+
+    /* Syntax highlight */
+    .sh-k { color: #E85542; font-weight: 600; }
+    .sh-s { color: #98d982; }
+    .sh-c { color: #8899aa; font-style: italic; }
+    /* step tag */
+    .step-tag {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 0.65rem; font-weight: 700; letter-spacing: 0.15em;
+      text-transform: uppercase; color: #8899aa;
+      border: 1px solid #1e2433; padding: 3px 8px;
+    }
+    /* copy button */
+    .copy-btn {
+      position: absolute; top: 10px; right: 10px;
+      padding: 4px 10px; font-size: 0.7rem; font-weight: 700;
+      background: #1e2433; color: #8899aa; border: 1px solid #263040;
+      cursor: pointer; transition: background 0.15s, color 0.15s;
+    }
+    .copy-btn:hover { background: #263040; color: #fff; }
+    html[data-theme="light"] .copy-btn { background: #e8e5dc !important; color: #666 !important; border-color: #d5d2c8 !important; }
+    html[data-theme="light"] .copy-btn:hover { background: #dddad0 !important; color: #111 !important; }
+    /* inline code */
+    code {
+      font-family: 'SFMono-Regular', 'Consolas', monospace;
+      font-size: 0.82em;
+      background: #141820; border: 1px solid #1e2433;
+      padding: 0.12em 0.45em; color: #E85542;
+    }
+    html[data-theme="light"] code { background: #f0eeea !important; border-color: #e2dfd6 !important; color: #cc3325 !important; }
+    /* step tag */
+    html[data-theme="light"] .step-tag { border-color: #d5d2c8 !important; color: #777 !important; }
+    /* step number large */
+    .step-num-large {
+      font-size: clamp(3.5rem, 8vw, 5rem);
+      font-weight: 900;
+      color: #E85542;
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+  </style>
+</head>
+<body class="overflow-x-hidden">
+
+  <canvas id="starfield" style="position:fixed;inset:0;z-index:0;pointer-events:none;"></canvas>
+
+  <!-- ═══ HEADER ═══ -->
+  <header class="fixed top-0 left-0 right-0 z-50 bg-black/95 border-b border-[#1a1a1a]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-14">
+
+        <!-- Logo (hidden at top, appears on scroll) -->
+        <a id="header-logo" href="/landing" class="flex items-center gap-2 font-bold text-sm select-none tracking-tight">
+          <svg width="895" height="653" viewBox="0 0 895 653" fill="none" xmlns="http://www.w3.org/2000/svg" class="logo-float" style="height:38px;width:auto;"><style>@keyframes kClawL{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-12deg)}}@keyframes kClawR{0%,100%{transform:rotate(0deg)}50%{transform:rotate(12deg)}}@keyframes kLegL{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-7deg)}}@keyframes kLegR{0%,100%{transform:rotate(0deg)}50%{transform:rotate(7deg)}}@keyframes kEyeP{0%,86%,100%{opacity:1}93%{opacity:0.05}}#claw_left{transform-box:fill-box;transform-origin:40% 72%;animation:kClawL 2.4s ease-in-out infinite}#claw_right{transform-box:fill-box;transform-origin:62% 72%;animation:kClawR 2.4s ease-in-out infinite}#leg_l1{transform-box:fill-box;transform-origin:100% 38%;animation:kLegL 1.8s ease-in-out infinite 0s}#leg_l2{transform-box:fill-box;transform-origin:100% 5%;animation:kLegL 1.8s ease-in-out infinite 0.3s}#leg_l3{transform-box:fill-box;transform-origin:100% 0%;animation:kLegL 1.8s ease-in-out infinite 0.6s}#leg_r1{transform-box:fill-box;transform-origin:0% 38%;animation:kLegR 1.8s ease-in-out infinite 0.15s}#leg_r2{transform-box:fill-box;transform-origin:0% 5%;animation:kLegR 1.8s ease-in-out infinite 0.45s}#leg_r3{transform-box:fill-box;transform-origin:0% 0%;animation:kLegR 1.8s ease-in-out infinite 0.75s}#eye_left circle,#eye_right circle{animation:kEyeP 4.5s ease-in-out infinite 1s}</style><defs><linearGradient id="kbg" x1="448.5" y1="222.5" x2="448.5" y2="594.5" gradientUnits="userSpaceOnUse"><stop stop-color="#E64926"/><stop offset="1" stop-color="#870924"/></linearGradient><linearGradient id="kcl" x1="180.544" y1="0" x2="180.544" y2="251.5" gradientUnits="userSpaceOnUse"><stop stop-color="#E94A2C"/><stop offset="1" stop-color="#D90E22"/></linearGradient><linearGradient id="kcl2" x1="293.307" y1="65.6709" x2="293.307" y2="192.538" gradientUnits="userSpaceOnUse"><stop stop-color="#E9482C"/><stop offset="1" stop-color="#DC1924"/></linearGradient><linearGradient id="kcr" x1="717.069" y1="0" x2="717.069" y2="251.5" gradientUnits="userSpaceOnUse"><stop stop-color="#E94A2C"/><stop offset="1" stop-color="#D90E22"/></linearGradient><linearGradient id="kcr2" x1="604.307" y1="65.6709" x2="604.307" y2="192.538" gradientUnits="userSpaceOnUse"><stop stop-color="#E9482C"/><stop offset="1" stop-color="#DC1924"/></linearGradient></defs><g id="crab"><rect id="body" x="246" y="222.5" width="405" height="372" rx="90" fill="url(#kbg)"/><g id="eye_left"><path d="M396.5 150.5C414.449 150.5 429 165.051 429 183C429 200.949 414.449 215.5 396.5 215.5C378.551 215.5 364 200.949 364 183C364 165.051 378.551 150.5 396.5 150.5ZM396.5 155.5C381.312 155.5 369 167.812 369 183C369 198.188 381.312 210.5 396.5 210.5C411.688 210.5 424 198.188 424 183C424 167.812 411.688 155.5 396.5 155.5Z" fill="#DE4326"/><circle cx="396.5" cy="183" r="27.5" fill="black"/><rect x="390" y="212.5" width="16" height="10" fill="#DE4326"/><circle cx="396.5" cy="183" r="9.5" fill="#14DEFF"/></g><g id="eye_right"><path d="M499.5 150.5C517.449 150.5 532 165.051 532 183C532 197.644 522.314 210.024 509 214.088V222.5H493V214.849C478.166 211.837 467 198.723 467 183C467 165.051 481.551 150.5 499.5 150.5ZM499.5 155.5C484.312 155.5 472 167.812 472 183C472 198.188 484.312 210.5 499.5 210.5C514.688 210.5 527 198.188 527 183C527 167.812 514.688 155.5 499.5 155.5Z" fill="#DE4326"/><circle cx="499.5" cy="183" r="27.5" fill="black"/><circle cx="499.5" cy="183" r="9.5" fill="#14DEFF"/></g><path id="leg_l1" d="M110.293 341.5L225.293 381V423L117.793 392.5C87.6266 409.667 27.2933 444.3 27.2933 445.5C6.49325 444.7 3.95992 423.5 5.29325 413L110.293 341.5Z" fill="#D31A2A"/><path id="leg_l2" d="M101.187 428.304L222.625 434.459L222.625 477.934L122.498 475.241C98.256 500.081 49.8539 550.049 50.1858 551.202C29.9758 556.186 21.6782 536.513 20.0557 526.054L101.187 428.304Z" fill="#B91223"/><path id="leg_l3" d="M132.429 522.168C132.429 522.168 224.172 495.008 224.041 495.693C219 522.168 232.928 538.169 232.928 538.169L165.928 561.169C152.196 593.046 137.206 637.71 137.929 638.668C111.429 648.168 106.192 634.351 100.929 625.168L132.429 522.168Z" fill="#9C0A1D"/><path id="leg_r1" d="M784.24 341.5L669.24 381V423L776.74 392.5C806.907 409.667 867.24 444.3 867.24 445.5C888.04 444.7 890.573 423.5 889.24 413L784.24 341.5Z" fill="#D31A2A"/><path id="leg_r2" d="M793.347 428.304L671.908 434.459L671.908 477.934L772.035 475.241C796.277 500.081 844.679 550.049 844.347 551.202C864.557 556.186 872.855 536.513 874.477 526.054L793.347 428.304Z" fill="#B91223"/><path id="leg_r3" d="M762.104 522.168C762.104 522.168 670.361 495.008 670.492 495.693C675.533 522.168 661.605 538.169 661.605 538.169L728.605 561.169C742.337 593.046 757.327 637.71 756.604 638.668C783.104 648.168 788.342 634.351 793.604 625.168L762.104 522.168Z" fill="#9C0A1D"/><g id="claw_left"><path d="M268.5 2L207.152 0.271891C201.001 0.0986084 195.058 2.50978 190.766 6.92018L107 93L86 194.5L111 225L189.5 251.5L266 200L210 117C231.333 84.5 274.2 17.7 275 10.5C275.8 3.3 271 1.83333 268.5 2Z" fill="url(#kcl)"/><path d="M338 66L240 128.5C251.167 150.167 278 194 283 192.5C292.15 189.755 349.5 82.5 346.5 73C344.1 65.4 339.833 65.1667 338 66Z" fill="url(#kcl2)"/><path d="M187 266.5L112 243.5C117 260.5 124.362 294.512 128 303C134 317 142.667 320.833 147 323L229 357.5V296.5L234 286.5L207 266.5L158 308L187 266.5Z" fill="#DB1523"/></g><g id="claw_right"><path d="M629.114 2L690.461 0.271891C696.613 0.0986084 702.556 2.50978 706.848 6.92018L790.614 93L811.614 194.5L786.614 225L708.114 251.5L631.614 200L687.614 117C666.28 84.5 623.414 17.7 622.614 10.5C621.814 3.3 626.614 1.83333 629.114 2Z" fill="url(#kcr)"/><path d="M559.614 66L657.614 128.5C646.447 150.167 619.614 194 614.614 192.5C605.464 189.755 548.114 82.5 551.114 73C553.514 65.4 557.78 65.1667 559.614 66Z" fill="url(#kcr2)"/><path d="M710.614 266.5L785.614 243.5C780.614 260.5 773.251 294.512 769.614 303C763.614 317 754.947 320.833 750.614 323L668.614 357.5V296.5L663.614 286.5L690.614 266.5L739.614 308L710.614 266.5Z" fill="#DB1523"/></g></g></svg>
+          <span class="text-white font-black text-2xl" data-i18n="cmp.brand.label">大闸蟹</span>
+        </a>
+
+        <!-- Desktop Nav -->
+        <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-[#666]">
+          <a href="./index.html#scenarios" class="hover:text-white transition-colors" data-i18n="nav.usecases">使用场景</a>
+          <a href="./index.html#features"  class="hover:text-white transition-colors" data-i18n="nav.features">功能</a>
+          <a href="./index.html#pricing"   class="hover:text-white transition-colors" data-i18n="nav.pricing">方案</a>
+          <a href="/guide"    class="hover:text-white transition-colors inline-flex items-center gap-1" data-i18n="nav.guide">使用教程<svg class="w-2.5 h-2.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+          <a href="/advanced" class="hover:text-white transition-colors inline-flex items-center gap-1" data-i18n="nav.advanced">高级功能<svg class="w-2.5 h-2.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+          <a href="/faq"      class="hover:text-white transition-colors inline-flex items-center gap-1" data-i18n="nav.faq">常见问题<svg class="w-2.5 h-2.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+        </nav>
+
+        <!-- Right: Lang + CTA -->
+        <div class="flex items-center gap-3">
+          <button id="lang-btn"
+            class="hidden md:inline-flex items-center px-3 py-1.5 border border-[#333] text-xs font-bold text-[#888] hover:border-white hover:text-white transition-colors tracking-wider">
+            EN
+          </button>
+          <!-- Theme toggle (desktop) -->
+          <button id="theme-btn"
+            class="hidden md:inline-flex items-center justify-center w-8 h-8 border border-[#333] text-[#888] hover:border-white hover:text-white transition-colors"
+            aria-label="Toggle theme">
+            <svg id="icon-moon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+            </svg>
+            <svg id="icon-sun" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+          </button>
+          <a href="./index.html#pricing"
+            class="hidden md:inline-flex items-center gap-1 bg-[#E85542] text-white text-sm font-black px-5 py-2 hover:bg-[#ef6b5a] transition-colors tracking-tight"
+            data-i18n="nav.cta">查看方案 ↗</a>
+
+          <!-- Mobile hamburger -->
+          <button id="hamburger-btn" class="md:hidden p-2" aria-label="Menu">
+            <svg id="icon-hamburger" class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+            <svg id="icon-close" class="w-5 h-5 text-white hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Drawer -->
+  <div id="mobile-menu" class="fixed top-0 right-0 bottom-0 w-72 bg-[#080808] z-40 shadow-2xl flex flex-col pt-20 px-6 pb-8 border-l border-[#1a1a1a]">
+    <nav class="flex flex-col gap-1 text-[#aaa] font-medium text-base">
+      <a href="./index.html#scenarios" class="mobile-link py-3 border-b border-[#1a1a1a] hover:text-[#E85542] transition-colors" data-i18n="nav.usecases">使用场景</a>
+      <a href="./index.html#features"  class="mobile-link py-3 border-b border-[#1a1a1a] hover:text-[#E85542] transition-colors" data-i18n="nav.features">功能</a>
+      <a href="./index.html#pricing"   class="mobile-link py-3 border-b border-[#1a1a1a] hover:text-[#E85542] transition-colors" data-i18n="nav.pricing">方案</a>
+      <a href="/guide"    class="mobile-link py-3 border-b border-[#1a1a1a] hover:text-[#E85542] transition-colors flex items-center justify-between" data-i18n="nav.guide">使用教程<svg class="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a href="/advanced" class="mobile-link py-3 border-b border-[#1a1a1a] hover:text-[#E85542] transition-colors flex items-center justify-between" data-i18n="nav.advanced">高级功能<svg class="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+      <a href="/faq"      class="mobile-link py-3 border-b border-[#1a1a1a] hover:text-[#E85542] transition-colors flex items-center justify-between" data-i18n="nav.faq">常见问题<svg class="w-3 h-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
+    </nav>
+    <div class="mt-6 flex flex-col gap-3">
+      <button id="lang-btn-mobile"
+        class="w-full py-2.5 border border-[#333] text-sm font-bold text-[#888] hover:border-white hover:text-white transition-colors tracking-wider">
+        EN
+      </button>
+      <!-- Theme toggle (mobile) -->
+      <button id="theme-btn-mobile"
+        class="w-full py-2.5 border border-[#333] text-sm font-bold text-[#888] hover:border-white hover:text-white transition-colors flex items-center justify-center gap-2">
+        <svg id="icon-moon-mobile" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+        </svg>
+        <svg id="icon-sun-mobile" class="w-4 h-4 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+        </svg>
+        <span id="theme-label-mobile">浅色模式</span>
+      </button>
+      <a href="./index.html#pricing"
+        class="mobile-link w-full text-center bg-[#E85542] text-white text-sm font-black px-5 py-3 hover:bg-[#ef6b5a] transition-colors"
+        data-i18n="nav.cta">查看方案 ↗</a>
+    </div>
+  </div>
+  <div id="drawer-overlay" class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
+
+  <!-- ═══ HERO ═══ -->
+  <section class="relative z-10 pt-14 border-b border-[#1a1a1a]">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+      <div class="reveal">
+        <div class="mb-4">
+          <span class="text-xs font-bold tracking-widest uppercase text-[#444]">SELF-HOSTED INSTALLATION</span>
+        </div>
+        <h1 class="text-5xl sm:text-7xl font-black text-white mb-6 leading-none tracking-tight">VPS<br>安装教学</h1>
+        <p class="text-[#888] text-lg mb-10 max-w-xl leading-relaxed">
+          从一台全新 VPS 到完整运行的大闸蟹 AI 助理，手把手完整安装教学。
+        </p>
+
+        <!-- Prerequisites box -->
+        <div class="border border-[#FF6B35]/30 bg-[#FF6B35]/5 p-5 sm:p-6">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="text-[#FF6B35] text-xs font-bold tracking-widest uppercase">⚠ 开始前请确认</span>
+          </div>
+          <ul class="space-y-2.5 text-sm text-[#888]">
+            <li class="flex items-start gap-3">
+              <span class="text-[#FF6B35] font-bold mt-0.5 flex-shrink-0">—</span>
+              一台 VPS（Ubuntu 22.04 LTS 推荐，至少 1GB RAM）
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="text-[#FF6B35] font-bold mt-0.5 flex-shrink-0">—</span>
+              能 SSH 连线到你的伺服器
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="text-[#FF6B35] font-bold mt-0.5 flex-shrink-0">—</span>
+              已取得 AI API Key（如 Gemini、DeepSeek 等）
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="text-[#FF6B35] font-bold mt-0.5 flex-shrink-0">—</span>
+              已取得 Telegram Bot Token（向 @BotFather 申请）
+            </li>
+          </ul>
+        </div>
+
+        <!-- Step index pills -->
+        <div class="flex flex-wrap gap-2 mt-8">
+          <a href="#step1" class="text-[10px] font-bold tracking-widest uppercase border border-[#1a1a1a] text-[#555] px-3 py-1.5 hover:border-[#E85542]/40 hover:text-[#E85542] transition-colors">/01 初始设定</a>
+          <a href="#step2" class="text-[10px] font-bold tracking-widest uppercase border border-[#1a1a1a] text-[#555] px-3 py-1.5 hover:border-[#E85542]/40 hover:text-[#E85542] transition-colors">/02 Node.js</a>
+          <a href="#step3" class="text-[10px] font-bold tracking-widest uppercase border border-[#1a1a1a] text-[#555] px-3 py-1.5 hover:border-[#E85542]/40 hover:text-[#E85542] transition-colors">/03 安装套件</a>
+          <a href="#step4" class="text-[10px] font-bold tracking-widest uppercase border border-[#1a1a1a] text-[#555] px-3 py-1.5 hover:border-[#E85542]/40 hover:text-[#E85542] transition-colors">/04 初始化设定</a>
+          <a href="#step5" class="text-[10px] font-bold tracking-widest uppercase border border-[#1a1a1a] text-[#555] px-3 py-1.5 hover:border-[#E85542]/40 hover:text-[#E85542] transition-colors">/05 安装技能</a>
+          <a href="#step6" class="text-[10px] font-bold tracking-widest uppercase border border-[#1a1a1a] text-[#555] px-3 py-1.5 hover:border-[#E85542]/40 hover:text-[#E85542] transition-colors">/06 systemd</a>
+          <a href="#step7" class="text-[10px] font-bold tracking-widest uppercase border border-[#1a1a1a] text-[#555] px-3 py-1.5 hover:border-[#E85542]/40 hover:text-[#E85542] transition-colors">/07 测试</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ STEP 1 ═══ -->
+  <section class="relative z-10 border-b border-[#1a1a1a]" id="step1">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="reveal">
+        <!-- Step header -->
+        <div class="flex items-end gap-4 mb-8 border-b border-[#1a1a1a] pb-6">
+          <div class="step-num-large">/01</div>
+          <div class="pb-2">
+            <div class="text-xs font-bold tracking-widest uppercase text-[#444] mb-1">Step 01</div>
+            <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">初始伺服器设定</h2>
+          </div>
+        </div>
+
+        <p class="text-[#888] mb-6 leading-relaxed">SSH 连线到你的 VPS 并更新套件列表，确保系统环境就绪。</p>
+
+        <!-- Code: SSH -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 连线到你的 VPS（替换为你的 IP）</span>
+ssh root@<span class="sh-s">YOUR_SERVER_IP</span></pre>
+          </div>
+        </div>
+
+        <!-- Code: apt update -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 更新套件列表（只更新列表，不全面升级以节省时间）</span>
+apt-get update -y</pre>
+          </div>
+        </div>
+
+        <!-- Code: install tools -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 安装必要基础工具</span>
+apt-get install -y curl wget git build-essential</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ STEP 2 ═══ -->
+  <section class="relative z-10 border-b border-[#1a1a1a]" id="step2">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="reveal">
+        <div class="flex items-end gap-4 mb-8 border-b border-[#1a1a1a] pb-6">
+          <div class="step-num-large">/02</div>
+          <div class="pb-2">
+            <div class="text-xs font-bold tracking-widest uppercase text-[#444] mb-1">Step 02</div>
+            <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">安装 Node.js 20</h2>
+          </div>
+        </div>
+
+        <p class="text-[#888] mb-6 leading-relaxed">
+          龙虾（OpenClaw）基于 Node.js 运行，需要 Node.js 18 或以上版本。推荐使用官方 NodeSource 源安装 Node.js 20 LTS。
+        </p>
+
+        <!-- Code: NodeSource -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 安装 NodeSource 源</span>
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -</pre>
+          </div>
+        </div>
+
+        <!-- Code: install nodejs -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 安装 Node.js</span>
+apt-get install -y nodejs</pre>
+          </div>
+        </div>
+
+        <!-- Code: verify -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-6">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 确认安装成功</span>
+node --version   <span class="sh-c"># 应显示 v20.x.x</span>
+npm --version    <span class="sh-c"># 应显示 10.x.x</span></pre>
+          </div>
+        </div>
+
+        <!-- Callout: success -->
+        <div class="border border-[#E85542]/20 bg-[#E85542]/5 p-4 flex items-start gap-3">
+          <span class="text-[#E85542] flex-shrink-0 mt-0.5">✅</span>
+          <p class="text-sm text-[#888] leading-relaxed">
+            看到版本号出现就代表安装成功。Node.js 20 LTS 是目前最稳定的选择，支援到 2026 年 4 月。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ STEP 3 ═══ -->
+  <section class="relative z-10 border-b border-[#1a1a1a]" id="step3">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="reveal">
+        <div class="flex items-end gap-4 mb-8 border-b border-[#1a1a1a] pb-6">
+          <div class="step-num-large">/03</div>
+          <div class="pb-2">
+            <div class="text-xs font-bold tracking-widest uppercase text-[#444] mb-1">Step 03</div>
+            <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">安装龙虾核心套件</h2>
+          </div>
+        </div>
+
+        <p class="text-[#888] mb-6 leading-relaxed">
+          OpenClaw 是龙虾的核心引擎；ClaWHub 是技能管理工具，用来安装和管理各种功能技能。
+        </p>
+
+        <!-- Code: npm install -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 全域安装（需要 root 或 sudo）</span>
+npm install -g openclaw clawhub</pre>
+          </div>
+        </div>
+
+        <!-- Code: verify -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-6">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 确认安装成功</span>
+openclaw --version
+clawhub --version</pre>
+          </div>
+        </div>
+
+        <!-- Callout: warning -->
+        <div class="border border-[#FF6B35]/20 bg-[#FF6B35]/5 p-4 flex items-start gap-3 mb-4">
+          <span class="text-[#FF6B35] flex-shrink-0 mt-0.5">⚠</span>
+          <div class="text-sm text-[#888] leading-relaxed">
+            <strong class="text-white">出现 EACCES 权限错误？</strong> 执行以下指令修正 npm prefix 后重新安装：
+          </div>
+        </div>
+
+        <!-- Code: fix permissions -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed">npm config set prefix <span class="sh-s">'/usr/local'</span>
+npm install -g openclaw clawhub</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ STEP 4 ═══ -->
+  <section class="relative z-10 border-b border-[#1a1a1a]" id="step4">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="reveal">
+        <div class="flex items-end gap-4 mb-8 border-b border-[#1a1a1a] pb-6">
+          <div class="step-num-large">/04</div>
+          <div class="pb-2">
+            <div class="text-xs font-bold tracking-widest uppercase text-[#444] mb-1">Step 04</div>
+            <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">初始化并设定 API Keys</h2>
+          </div>
+        </div>
+
+        <p class="text-[#888] mb-6 leading-relaxed">
+          建立设定目录并完成龙虾初始化设定，填入你的 AI API Key 和 Telegram Bot Token。
+        </p>
+
+        <!-- Code: mkdir -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 建立设定目录</span>
+mkdir -p /root/.openclaw</pre>
+          </div>
+        </div>
+
+        <!-- Code: openclaw init -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-6">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 初始化设定（互动式）</span>
+openclaw init</pre>
+          </div>
+        </div>
+
+        <!-- Callout: info -->
+        <div class="border border-[#E85542]/20 bg-[#E85542]/5 p-4 flex items-start gap-3 mb-8">
+          <span class="text-[#E85542] flex-shrink-0 mt-0.5">💡</span>
+          <div class="text-sm text-[#888] leading-relaxed">
+            <strong class="text-white">执行后会互动式询问你：</strong><br/>
+            · AI Provider（选择 gemini / openai / anthropic / deepseek 等）<br/>
+            · AI API Key<br/>
+            · Telegram Bot Token<br/>
+            · 其他进阶设定（可直接按 Enter 跳过）
+          </div>
+        </div>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-4 mb-8">
+          <div class="flex-1 h-px bg-[#1a1a1a]"></div>
+          <span class="text-[#444] text-xs font-bold tracking-widest uppercase">或者手动建立设定档</span>
+          <div class="flex-1 h-px bg-[#1a1a1a]"></div>
+        </div>
+
+        <!-- Code: manual config -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-6">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 手动建立设定档</span>
+cat > /root/.openclaw/config.json &lt;&lt; <span class="sh-s">'EOF'</span>
+{
+  <span class="sh-s">"ai"</span>: {
+    <span class="sh-s">"provider"</span>: <span class="sh-s">"gemini"</span>,
+    <span class="sh-s">"api_key"</span>: <span class="sh-s">"YOUR_GEMINI_API_KEY"</span>,
+    <span class="sh-s">"model"</span>: <span class="sh-s">"gemini-2.0-flash"</span>
+  },
+  <span class="sh-s">"telegram"</span>: {
+    <span class="sh-s">"bot_token"</span>: <span class="sh-s">"YOUR_BOT_TOKEN"</span>
+  },
+  <span class="sh-s">"streaming"</span>: false,
+  <span class="sh-s">"tools"</span>: {
+    <span class="sh-s">"deny"</span>: []
+  }
+}
+<span class="sh-s">EOF</span></pre>
+          </div>
+        </div>
+
+        <!-- Callout: warning -->
+        <div class="border border-[#FF6B35]/20 bg-[#FF6B35]/5 p-4 flex items-start gap-3">
+          <span class="text-[#FF6B35] flex-shrink-0 mt-0.5">⚠</span>
+          <p class="text-sm text-[#888] leading-relaxed">
+            记得将 <code>YOUR_GEMINI_API_KEY</code> 和 <code>YOUR_BOT_TOKEN</code> 替换为你实际的值。设定完成后这个档案请妥善保管，不要公开分享。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ STEP 5 ═══ -->
+  <section class="relative z-10 border-b border-[#1a1a1a]" id="step5">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="reveal">
+        <div class="flex items-end gap-4 mb-8 border-b border-[#1a1a1a] pb-6">
+          <div class="step-num-large">/05</div>
+          <div class="pb-2">
+            <div class="text-xs font-bold tracking-widest uppercase text-[#444] mb-1">Step 05</div>
+            <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">安装推荐技能</h2>
+          </div>
+        </div>
+
+        <p class="text-[#888] mb-6 leading-relaxed">
+          大闸蟹建议安装以下 9 种技能，覆盖日常所需的搜寻、天气、股票、加密货币等功能。
+        </p>
+
+        <!-- Code: install skills (no force) -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 安装不需要 --force 的技能</span>
+clawhub install ddg-web-search weather summarize translate youtube-transcript</pre>
+          </div>
+        </div>
+
+        <!-- Code: install skills (force) -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-6">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 安装需要 --force 的技能（VirusTotal 误判，安全可用）</span>
+clawhub install --force skill-creator stock-info-explorer news-summary crypto-market-data</pre>
+          </div>
+        </div>
+
+        <!-- Callout: info - why --force -->
+        <div class="border border-[#E85542]/20 bg-[#E85542]/5 p-4 flex items-start gap-3 mb-6">
+          <span class="text-[#E85542] flex-shrink-0 mt-0.5">📦</span>
+          <div class="text-sm text-[#888] leading-relaxed">
+            <strong class="text-white">为什么需要 --force？</strong> 部分技能的脚本可能被 VirusTotal 等安全扫描工具误判。这些技能完全安全，加上 <code>--force</code> 旗标仅是告诉 ClaWHub 跳过安全警告继续安装。
+          </div>
+        </div>
+
+        <!-- Callout: warning - uv -->
+        <div class="border border-[#FF6B35]/20 bg-[#FF6B35]/5 p-4 flex items-start gap-3 mb-4">
+          <span class="text-[#FF6B35] flex-shrink-0 mt-0.5">🔧</span>
+          <div class="text-sm text-[#888] leading-relaxed">
+            <strong class="text-white">stock-info-explorer 需要额外安装 uv（Python 环境管理工具）：</strong>
+          </div>
+        </div>
+
+        <!-- Code: install uv -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 安装 uv（stock-info-explorer 的 Python 依赖）</span>
+curl -LsSf https://astral.sh/uv/install.sh | env HOME=/root sh
+ln -sf /root/.local/bin/uv /usr/local/bin/uv</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ STEP 6 ═══ -->
+  <section class="relative z-10 border-b border-[#1a1a1a]" id="step6">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="reveal">
+        <div class="flex items-end gap-4 mb-8 border-b border-[#1a1a1a] pb-6">
+          <div class="step-num-large">/06</div>
+          <div class="pb-2">
+            <div class="text-xs font-bold tracking-widest uppercase text-[#444] mb-1">Step 06</div>
+            <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">设定 systemd 服务</h2>
+          </div>
+        </div>
+
+        <p class="text-[#888] mb-6 leading-relaxed">
+          透过 systemd 服务让龙虾在伺服器重启后自动启动，并在崩溃时自动重启。
+        </p>
+
+        <!-- Code: create service file -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 建立 systemd service 档案</span>
+cat > /etc/systemd/system/openclaw.service &lt;&lt; <span class="sh-s">'EOF'</span>
+[Unit]
+Description=OpenClaw AI Agent
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root
+ExecStart=/usr/local/bin/openclaw start
+Restart=always
+RestartSec=10
+Environment=HOME=/root
+
+[Install]
+WantedBy=multi-user.target
+<span class="sh-s">EOF</span></pre>
+          </div>
+        </div>
+
+        <!-- Code: enable and start -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-4">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 启用并启动服务</span>
+systemctl daemon-reload
+systemctl enable openclaw
+systemctl start openclaw</pre>
+          </div>
+        </div>
+
+        <!-- Code: check status -->
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden mb-6">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 确认服务状态</span>
+systemctl status openclaw</pre>
+          </div>
+        </div>
+
+        <!-- Success badge -->
+        <div class="border border-[#E85542]/30 bg-[#E85542]/5 p-4 flex items-center gap-3">
+          <span class="text-[#E85542]">✅</span>
+          <p class="text-sm text-[#888]">
+            看到 <code>Active: active (running)</code> 表示成功！
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ STEP 7 ═══ -->
+  <section class="relative z-10 border-b border-[#1a1a1a]" id="step7">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+      <div class="reveal">
+        <div class="flex items-end gap-4 mb-8 border-b border-[#1a1a1a] pb-6">
+          <div class="step-num-large">/07</div>
+          <div class="pb-2">
+            <div class="text-xs font-bold tracking-widest uppercase text-[#444] mb-1">Step 07</div>
+            <h2 class="text-2xl sm:text-3xl font-black text-white leading-tight">测试你的大闸蟹</h2>
+          </div>
+        </div>
+
+        <p class="text-[#888] mb-8 leading-relaxed">
+          一切设定完成后，打开 Telegram 测试你的 AI 助理是否正常运行。
+        </p>
+
+        <!-- Checklist -->
+        <div class="space-y-3 mb-10">
+          <div class="flex items-start gap-4 border border-[#1a1a1a] p-4">
+            <span class="text-[#E85542] font-black text-lg flex-shrink-0 leading-none mt-0.5">1</span>
+            <p class="text-sm text-[#888] leading-relaxed">打开 Telegram，搜寻你的 Bot username</p>
+          </div>
+          <div class="flex items-start gap-4 border border-[#1a1a1a] p-4">
+            <span class="text-[#E85542] font-black text-lg flex-shrink-0 leading-none mt-0.5">2</span>
+            <p class="text-sm text-[#888] leading-relaxed">传送 <code>/start</code> 开始对话</p>
+          </div>
+          <div class="flex items-start gap-4 border border-[#1a1a1a] p-4">
+            <span class="text-[#E85542] font-black text-lg flex-shrink-0 leading-none mt-0.5">3</span>
+            <p class="text-sm text-[#888] leading-relaxed">试试说「你好」或「今天天气如何？」</p>
+          </div>
+          <div class="flex items-start gap-4 border border-[#E85542]/20 bg-[#E85542]/5 p-4">
+            <span class="text-[#E85542] font-black text-lg flex-shrink-0 leading-none mt-0.5">4</span>
+            <p class="text-sm text-[#E85542] font-semibold leading-relaxed">如果有回应，恭喜！安装成功 🎉</p>
+          </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="mb-6">
+          <div class="text-xs font-bold tracking-widest uppercase text-[#444] mb-4">常见问题排查</div>
+          <div class="space-y-2">
+            <div class="border-l-2 border-[#FF6B35]/50 pl-4 py-2">
+              <p class="text-sm text-[#888]"><strong class="text-white">Bot 没有回应</strong> → 确认 Bot Token 正确，确认服务正在运行（<code>systemctl status openclaw</code>）</p>
+            </div>
+            <div class="border-l-2 border-[#FF6B35]/50 pl-4 py-2">
+              <p class="text-sm text-[#888]"><strong class="text-white">API 错误</strong> → 确认 API Key 正确且有剩余额度</p>
+            </div>
+            <div class="border-l-2 border-[#FF6B35]/50 pl-4 py-2">
+              <p class="text-sm text-[#888]"><strong class="text-white">服务崩溃</strong> → 查看日志（<code>journalctl -u openclaw -f</code>）</p>
+            </div>
+            <div class="border-l-2 border-[#FF6B35]/50 pl-4 py-2">
+              <p class="text-sm text-[#888]"><strong class="text-white">权限问题</strong> → 确认以 root 身份执行，或使用 sudo</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Code: logs -->
+        <div class="text-xs font-bold tracking-widest uppercase text-[#444] mb-4">查看日志</div>
+        <div class="relative bg-[#0d0d0d] border border-[#1a1a1a] overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1a1a1a]">
+            <span class="text-[#444] text-xs font-mono tracking-wider">bash</span>
+            <button class="copy-btn">复制</button>
+          </div>
+          <div class="p-4 font-mono text-sm overflow-x-auto">
+            <pre class="text-[#8899aa] leading-relaxed"><span class="sh-c"># 查看即时日志</span>
+journalctl -u openclaw -f
+
+<span class="sh-c"># 查看最近 100 行日志</span>
+journalctl -u openclaw -n 100</pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CTA ═══ -->
+  <section class="relative z-10 py-20 px-4 border-b border-[#1a1a1a]">
+    <div class="max-w-4xl mx-auto">
+      <div class="reveal border border-[#1a1a1a] p-8 sm:p-12">
+        <div class="mb-3">
+          <span class="text-xs font-bold tracking-widest uppercase text-[#444]">NEXT STEPS</span>
+        </div>
+        <h2 class="text-3xl sm:text-4xl font-black text-white mb-4">
+          设定完成！<span class="text-[#E85542]">接下来呢？</span>
+        </h2>
+        <p class="text-[#888] text-lg mb-10 leading-relaxed max-w-xl">
+          探索更多进阶功能，或回到首页查看更多使用情境。
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4">
+          <a href="/advanced"
+            class="inline-flex items-center justify-center gap-2 bg-[#E85542] text-white text-sm font-black px-8 py-4 hover:bg-[#ef6b5a] transition-colors tracking-tight">
+            进阶功能 →
+          </a>
+          <a href="/landing"
+            class="inline-flex items-center justify-center gap-2 border border-[#1a1a1a] text-[#888] text-sm font-black px-8 py-4 hover:border-[#888] hover:text-white transition-colors tracking-tight">
+            返回首页
+          </a>
+          <a href="/faq"
+            class="inline-flex items-center justify-center gap-2 border border-[#1a1a1a] text-[#888] text-sm font-black px-8 py-4 hover:border-[#888] hover:text-white transition-colors tracking-tight">
+            常见问题
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer class="relative z-10 bg-black text-[#555] py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid md:grid-cols-3 gap-10 mb-12">
+
+        <!-- Logo + tagline -->
+        <div class="md:col-span-1">
+          <div class="flex items-center gap-2 mb-4">
+            <svg width="111" height="91" viewBox="0 0 111 91" fill="none" xmlns="http://www.w3.org/2000/svg" style="height:28px;width:auto;">
+              <rect x="29" y="23" width="50" height="63" fill="#E63B35"/>
+              <rect x="74" y="23" width="5" height="63" fill="#B52C27"/>
+              <rect x="91" y="29" width="5" height="8" fill="#B52C27"/>
+              <rect x="21" y="29" width="5" height="8" fill="#B52C27"/>
+              <path d="M19 9H23C24.6569 9 26 10.3431 26 12V26H19V9Z" fill="#B52C27"/>
+              <path d="M111 8C111 3.58172 107.418 0 103 0H99V26H105C108.314 26 111 23.3137 111 20V8Z" fill="#B52C27"/>
+              <path d="M12 17H17V9H21C22.6569 9 24 10.3431 24 12V26H6C2.68629 26 1.61069e-08 23.3137 0 20V8C0 3.58172 3.58172 1.28851e-07 8 0H12V17Z" fill="#E63B35"/>
+              <rect width="8" height="8" transform="matrix(-1 0 0 1 92 29)" fill="#E63B35"/>
+              <path d="M100 0C104.418 1.28851e-07 108 3.58172 108 8V20C108 23.3137 105.314 26 102 26H84V12C84 10.3431 85.3431 9 87 9H91V17H96V0H100Z" fill="#E63B35"/>
+              <rect width="8" height="8" transform="matrix(-1 0 0 1 22 29)" fill="#E63B35"/>
+              <rect x="14" y="79" width="12" height="7" fill="#E63B35"/>
+              <rect x="14" y="68" width="12" height="7" fill="#E63B35"/>
+              <rect x="14" y="57" width="12" height="7" fill="#E63B35"/>
+              <rect x="82" y="68" width="12" height="7" fill="#E63B35"/>
+              <rect x="82" y="57" width="12" height="7" fill="#E63B35"/>
+              <rect x="82" y="79" width="12" height="7" fill="#E63B35"/>
+              <rect x="7" y="91" width="12" height="7" transform="rotate(-90 7 91)" fill="#E63B35"/>
+              <rect x="7" y="77" width="9" height="7" transform="rotate(-90 7 77)" fill="#E63B35"/>
+              <rect x="7" y="66" width="9" height="7" transform="rotate(-90 7 66)" fill="#E63B35"/>
+              <rect x="94" y="91" width="12" height="7" transform="rotate(-90 94 91)" fill="#E63B35"/>
+              <rect x="94" y="77" width="9" height="7" transform="rotate(-90 94 77)" fill="#E63B35"/>
+              <rect x="94" y="66" width="9" height="7" transform="rotate(-90 94 66)" fill="#E63B35"/>
+              <rect x="40" y="6" width="8" height="17" fill="#E63B35"/>
+              <rect x="40" y="6" width="6" height="13" fill="black"/>
+              <rect x="41" y="7" width="3" height="7" fill="white"/>
+              <rect x="60" y="6" width="8" height="17" fill="#E63B35"/>
+              <rect x="60" y="6" width="6" height="13" fill="black"/>
+              <rect x="61" y="7" width="3" height="7" fill="white"/>
+            </svg>
+            <span class="text-white font-black text-sm tracking-tight" data-i18n="cmp.brand.label">大闸蟹</span>
+          </div>
+          <p class="text-sm leading-relaxed text-[#444]" data-i18n-html="footer.tagline">风浪越大，蟹越贵。<br>你的专属 AI，住在通讯软件里。</p>
+        </div>
+
+        <!-- Col 1 -->
+        <div>
+          <h4 class="text-white font-black text-xs uppercase tracking-[0.2em] mb-5" data-i18n="footer.col1">产品</h4>
+          <ul class="space-y-3 text-sm">
+            <li><a href="./index.html#features"  class="hover:text-white transition-colors" data-i18n="footer.link.features">功能介绍</a></li>
+            <li><a href="./index.html#pricing"   class="hover:text-white transition-colors" data-i18n="footer.link.pricing">方案价格</a></li>
+            <li><a href="./index.html#compare"   class="hover:text-white transition-colors" data-i18n="footer.link.compare">对比分析</a></li>
+            <li><a href="./index.html#scenarios" class="hover:text-white transition-colors" data-i18n="footer.link.scenarios">使用场景</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 2 -->
+        <div>
+          <h4 class="text-white font-black text-xs uppercase tracking-[0.2em] mb-5" data-i18n="footer.col2">帮助</h4>
+          <ul class="space-y-3 text-sm">
+            <li><a href="/guide"    class="hover:text-white transition-colors" data-i18n="footer.link.guide">使用教程</a></li>
+            <li><a href="/install"  class="hover:text-white transition-colors" data-i18n="footer.link.install">安装教程</a></li>
+            <li><a href="/advanced" class="hover:text-white transition-colors" data-i18n="footer.link.advanced">高级功能</a></li>
+            <li><a href="/faq"      class="hover:text-white transition-colors" data-i18n="footer.link.faq">常见问题</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="border-t border-[#0d0d0d] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <p class="text-xs text-[#333]" data-i18n="footer.copy">© 2026 大闸蟹. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // ── Theme toggle ──────────────────────────────────────────────
+    (function() {
+      const html = document.documentElement;
+      let currentTheme = localStorage.getItem('dzx-theme') || 'dark';
+
+      function applyTheme(theme) {
+        currentTheme = theme;
+        html.setAttribute('data-theme', theme);
+        const isLight = theme === 'light';
+
+        // Desktop icons
+        const moonIcon = document.getElementById('icon-moon');
+        const sunIcon  = document.getElementById('icon-sun');
+        if (moonIcon) moonIcon.classList.toggle('hidden', isLight);
+        if (sunIcon)  sunIcon.classList.toggle('hidden', !isLight);
+
+        // Mobile icons + label
+        const moonM  = document.getElementById('icon-moon-mobile');
+        const sunM   = document.getElementById('icon-sun-mobile');
+        const label  = document.getElementById('theme-label-mobile');
+        if (moonM) moonM.classList.toggle('hidden', isLight);
+        if (sunM)  sunM.classList.toggle('hidden', !isLight);
+        if (label) label.textContent = isLight ? '深色模式' : '浅色模式';
+
+        localStorage.setItem('dzx-theme', theme);
+      }
+
+      function toggleTheme() { applyTheme(currentTheme === 'dark' ? 'light' : 'dark'); }
+
+      document.addEventListener('DOMContentLoaded', function() {
+        const btn  = document.getElementById('theme-btn');
+        const btnM = document.getElementById('theme-btn-mobile');
+        if (btn)  btn.addEventListener('click', toggleTheme);
+        if (btnM) btnM.addEventListener('click', toggleTheme);
+        applyTheme(currentTheme); // re-apply after DOM ready to sync icons
+      });
+
+      // Apply immediately (before DOM ready) to prevent flash
+      applyTheme(currentTheme);
+    })();
+
+    // ── i18n ────────────────────────────────────────────────────
+    const translations = {
+      zh: {
+        'nav.usecases':'使用场景','nav.features':'功能','nav.pricing':'方案',
+        'nav.guide':'使用教程','nav.advanced':'高级功能','nav.faq':'常见问题',
+        'nav.cta':'查看方案 ↗',
+        'footer.col1':'产品','footer.col2':'帮助',
+        'footer.tagline':'风浪越大，蟹越贵。<br>你的专属 AI，住在通讯软件里。',
+        'footer.link.features':'功能介绍','footer.link.pricing':'方案价格',
+        'footer.link.compare':'对比分析','footer.link.scenarios':'使用场景',
+        'footer.link.guide':'使用教程','footer.link.install':'安装教程',
+        'footer.link.advanced':'高级功能','footer.link.faq':'常见问题',
+        'footer.copy':'© 2026 大闸蟹. All rights reserved.',
+        'cmp.brand.label':'大闸蟹',
+      },
+      en: {
+        'nav.usecases':'Use Cases','nav.features':'Features','nav.pricing':'Pricing',
+        'nav.guide':'Setup Guide','nav.advanced':'Advanced','nav.faq':'FAQ',
+        'nav.cta':'View Plans ↗',
+        'footer.col1':'Product','footer.col2':'Help',
+        'footer.tagline':'The rougher the waters, the higher the price.<br>Your personal AI, living in your messaging app.',
+        'footer.link.features':'Features','footer.link.pricing':'Pricing',
+        'footer.link.compare':'Comparison','footer.link.scenarios':'Use Cases',
+        'footer.link.guide':'Setup Guide','footer.link.install':'Installation',
+        'footer.link.advanced':'Advanced','footer.link.faq':'FAQ',
+        'footer.copy':'© 2026 ORCLAW. All rights reserved.',
+        'cmp.brand.label':'ORCLAW',
+      }
+    };
+
+    let currentLang = localStorage.getItem('dzx-lang') || 'zh';
+
+    function applyLang(lang) {
+      currentLang = lang;
+      const t = translations[lang] || translations.zh;
+
+      // data-i18n (text content)
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key] !== undefined) el.textContent = t[key];
+      });
+
+      // data-i18n-html (innerHTML)
+      document.querySelectorAll('[data-i18n-html]').forEach(el => {
+        const key = el.getAttribute('data-i18n-html');
+        if (t[key] !== undefined) el.innerHTML = t[key];
+      });
+
+      // Update lang buttons
+      const langBtn = document.getElementById('lang-btn');
+      const langBtnM = document.getElementById('lang-btn-mobile');
+      if (langBtn)  langBtn.textContent  = lang === 'zh' ? 'EN' : '中';
+      if (langBtnM) langBtnM.textContent = lang === 'zh' ? 'EN' : '中';
+
+      localStorage.setItem('dzx-lang', lang);
+    }
+
+    function toggleLang() {
+      applyLang(currentLang === 'zh' ? 'en' : 'zh');
+    }
+
+    document.getElementById('lang-btn').addEventListener('click', toggleLang);
+    document.getElementById('lang-btn-mobile').addEventListener('click', toggleLang);
+
+    // ── Mobile menu ──────────────────────────────────────────────
+    const hamburger = document.getElementById('hamburger-btn');
+    const mobileMenu = document.getElementById('mobile-menu');
+    const overlay    = document.getElementById('drawer-overlay');
+    const iconOpen   = document.getElementById('icon-hamburger');
+    const iconClose  = document.getElementById('icon-close');
+
+    function openMenu() {
+      mobileMenu.classList.add('open');
+      overlay.classList.remove('hidden');
+      iconOpen.classList.add('hidden');
+      iconClose.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeMenu() {
+      mobileMenu.classList.remove('open');
+      overlay.classList.add('hidden');
+      iconOpen.classList.remove('hidden');
+      iconClose.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    hamburger.addEventListener('click', () => {
+      mobileMenu.classList.contains('open') ? closeMenu() : openMenu();
+    });
+    overlay.addEventListener('click', closeMenu);
+
+    document.querySelectorAll('.mobile-link').forEach(link => {
+      link.addEventListener('click', closeMenu);
+    });
+
+    // ── Scroll reveal ────────────────────────────────────────────
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+    // ── Init ─────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', () => {
+      applyLang(localStorage.getItem('dzx-lang') || 'zh');
+    });
+    applyLang(currentLang);
+
+    // ── Header scroll: transparent → dark, logo slides in ────────
+    (function() {
+      const header = document.querySelector('header');
+      function onScroll() {
+        if (window.scrollY > 60) {
+          header.classList.add('scrolled');
+        } else {
+          header.classList.remove('scrolled');
+        }
+      }
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll(); // run once on load
+    })();
+
+    // ── Star field canvas ─────────────────────────────────────────
+    (function() {
+      const canvas = document.getElementById('starfield');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      let stars = [];
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      function init() {
+        stars = [];
+        for (let i = 0; i < 220; i++) {
+          stars.push({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 1.1 + 0.15,
+            base: Math.random() * 0.45 + 0.08,
+            phase: Math.random() * Math.PI * 2,
+            speed: Math.random() * 0.6 + 0.2
+          });
+        }
+      }
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const t = Date.now() * 0.001;
+        stars.forEach(s => {
+          const o = s.base + 0.25 * Math.sin(t * s.speed + s.phase);
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255,255,255,' + Math.max(0.04, Math.min(0.75, o)) + ')';
+          ctx.fill();
+        });
+        requestAnimationFrame(draw);
+      }
+      resize(); init(); draw();
+      window.addEventListener('resize', function() { resize(); init(); });
+    })();
+
+    // ── Copy buttons ──────────────────────────────────────────────
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pre = btn.closest('.relative')?.querySelector('pre');
+        if (!pre) return;
+        const text = pre.innerText || pre.textContent;
+        navigator.clipboard.writeText(text).then(() => {
+          const orig = btn.textContent;
+          btn.textContent = '已复制 ✓';
+          btn.style.color = '#E85542';
+          setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+        }).catch(() => {
+          const ta = document.createElement('textarea');
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          const orig = btn.textContent;
+          btn.textContent = '已复制 ✓';
+          btn.style.color = '#E85542';
+          setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

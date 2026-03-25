@@ -1,0 +1,37 @@
+{% extends "system_base.html" %}
+
+{% block title %}AI 余额充值 — 大闸蟹{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center p-6 min-h-screen">
+  <div class="w-full max-w-sm text-center">
+
+    <div class="mb-6 text-5xl">🦀</div>
+    <h1 class="text-2xl font-black mb-2">AI 余额充值</h1>
+    <p class="text-[#666] text-sm mb-8">输入购买时绑定的微信号，查询余额并充值</p>
+
+    <form method="POST" class="s-card p-6 text-left">
+      <label class="s-label">微信号 <span class="text-[#E85542]">*</span></label>
+      <input
+        class="s-input mb-2"
+        type="text"
+        name="wechat_id"
+        placeholder="请输入你的微信号"
+        autocomplete="off"
+        required
+      />
+      <p class="text-xs text-[#555] mb-6">请输入购买时填写的微信号</p>
+
+      {% if error %}
+      <div class="s-flash s-flash-error" style="margin-bottom:16px;">{{ error }}</div>
+      {% endif %}
+
+      <button type="submit" class="s-btn s-btn-primary" style="width:100%;padding:16px;font-size:16px;">查询余额 →</button>
+    </form>
+
+    <p class="text-[#333] text-xs mt-8">
+      首次购买？<a href="/" class="text-[#E85542]">返回首页</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

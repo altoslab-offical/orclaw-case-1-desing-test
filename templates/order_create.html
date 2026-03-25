@@ -1,0 +1,600 @@
+{% extends "base.html" %}
+{% block title %}新建订单 — 大闸蟹后台{% endblock %}
+{% block page_title %}新建订单{% endblock %}
+
+{% block content %}
+
+<!-- ── 部署盖板 Loading ── -->
+<div id="deploy-overlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.92);
+     z-index:9999; display:none; flex-direction:column; align-items:center; justify-content:center;">
+  <div style="text-align:center; max-width:420px; padding:0 24px;">
+    <!-- 龙虾动画 -->
+    <div style="font-size:56px; margin-bottom:20px; animation:bounce 1s ease-in-out infinite;">🦞</div>
+    <div style="font-size:22px; font-weight:700; color:#f1f5f9; margin-bottom:10px;" id="overlay-title">
+      部署中…
+    </div>
+    <div style="font-size:14px; color:#94a3b8; margin-bottom:28px; min-height:20px;" id="overlay-sub">
+      正在启动 EC2 服务器
+    </div>
+    <!-- 进度条 -->
+    <div style="background:#1e293b; border-radius:99px; height:6px; width:320px; overflow:hidden;">
+      <div id="overlay-bar" style="height:100%; background:linear-gradient(90deg,#6366f1,#818cf8);
+           border-radius:99px; width:0%; transition:width 0.8s ease;"></div>
+    </div>
+    <div style="font-size:12px; color:#64748b; margin-top:10px;" id="overlay-elapsed">0 秒</div>
+  </div>
+</div>
+
+<style>
+@keyframes bounce {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-12px); }
+}
+</style>
+
+<div style="max-width:800px; margin:0 auto;">
+
+  <!-- ── 页头 ── -->
+  <div class="flex-between mb-16">
+    <h2 style="font-size:20px; color:#0f172a;">新建订单</h2>
+    <a href="{{ url_for('index') }}" class="btn btn-default">返回列表</a>
+  </div>
+
+  <!-- ── Tab 切换 ── -->
+  <div style="display:flex; gap:0; margin-bottom:-1px; position:relative; z-index:1;">
+    <button onclick="switchTab('raw')" id="tab-raw"
+            style="padding:10px 22px; border:1px solid #e2e8f0; background:#fff; cursor:pointer;
+                   border-radius:10px 10px 0 0; font-size:13px; font-weight:600; color:#6366f1;
+                   border-bottom-color:#fff; font-family:inherit;">
+      粘贴规格
+    </button>
+    <button onclick="switchTab('form')" id="tab-form"
+            style="padding:10px 22px; border:1px solid #e2e8f0; background:#f8f9fc; cursor:pointer;
+                   border-radius:10px 10px 0 0; font-size:13px; font-weight:500; color:#94a3b8;
+                   margin-left:-1px; font-family:inherit;">
+      表单填写
+    </button>
+  </div>
+
+  <div class="card" style="border-radius:0 14px 14px 14px;">
+
+    <!-- ── 粘贴规格模式 ── -->
+    <div id="panel-raw">
+      <form method="POST" action="{{ url_for('order_create') }}" id="form-raw" onsubmit="onDeploySubmit(event, this)">
+        <input type="hidden" name="mode" value="raw">
+
+        <div class="form-group">
+          <label style="font-size:15px;">粘贴订单规格</label>
+          <p class="text-muted" style="margin-bottom:10px;">
+            支持任意格式，例如：<code>EC2: t3.large / 对接渠道: telegram / AI api: sk-xxx / 备注: 台北 John</code>
+          </p>
+          <textarea class="form-control" name="raw_input" id="raw-input"
+                    placeholder="EC2: t3.large&#10;对接渠道: telegram&#10;AI api: sk-xxxxxxxxxxxxxxxxxxxxxx&#10;TG Bot Token: 1234567890:AAxxxxxxxxxxxxxxxxxxxxxxxxxx&#10;用户备注: 台北客户 John"
+                    oninput="previewParse()"
+                    style="min-height:160px;">{{ raw_input or '' }}</textarea>
+        </div>
+
+        <!-- 实时解析预览 -->
+        <div id="parse-preview" style="background:#f8fafc; border:1px solid #e2e8f0;
+             border-radius:10px; padding:16px; margin-bottom:18px; font-size:13px; display:none;">
+          <div style="font-weight:700; margin-bottom:10px; color:#374151; font-size:13px;">解析预览</div>
+          <div id="parse-result"></div>
+        </div>
+
+        <div class="form-group">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" name="no_deploy" value="1" id="no-deploy-raw">
+            <span>仅创建订单，<strong>不立即部署</strong>（稍后手动部署）</span>
+          </label>
+        </div>
+
+        <div class="btn-group">
+          <button type="submit" class="btn btn-primary" style="min-width:160px;" id="submit-btn">
+            🚀 创建并部署
+          </button>
+          <span class="text-muted" style="align-self:center; font-size:12px;">
+            部署需要 5-8 分钟，页面进入等待界面
+          </span>
+        </div>
+      </form>
+    </div>
+
+    <!-- ── 表单填写模式 ── -->
+    <div id="panel-form" style="display:none;">
+      <form method="POST" action="{{ url_for('order_create') }}" onsubmit="onDeploySubmit(event, this)">
+        <input type="hidden" name="mode" value="form">
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label>套餐 *</label>
+            <select class="form-control" name="plan" required>
+              <option value="">— 选择套餐 —</option>
+              <option value="starter">Starter（t3.small / 2GB）</option>
+              <option value="standard">Standard（t3.medium / 4GB）</option>
+              <option value="pro">Pro（t3.large / 8GB）⭐ 推荐</option>
+              <option value="business">Business（t3.xlarge / 16GB）</option>
+              <option value="enterprise">Enterprise（t3.2xlarge / 32GB）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>通信渠道 *</label>
+            <select class="form-control" name="channel" required onchange="onChannelChange(this.value)">
+              <option value="">— 选择渠道 —</option>
+              <option value="telegram">Telegram</option>
+              <option value="qq">QQ（腾讯）</option>
+              <option value="feishu">飞书 Feishu / Lark</option>
+              <option value="wechat">微信小程序 WeChat</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- AI 提供商 + 模型选择 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
+          <div class="form-group">
+            <label>AI 提供商 *</label>
+            <select class="form-control" name="ai_provider" id="ai-provider" required
+                    onchange="onProviderChange(this.value)">
+              <option value="">— 选择 AI —</option>
+              <option value="openai">OpenAI</option>
+              <option value="google">Google Gemini</option>
+              <option value="anthropic">Anthropic Claude</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>模型 *</label>
+            <select class="form-control" name="ai_model" id="ai-model" required disabled>
+              <option value="">← 先选择 AI 提供商</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" id="api-key-group">
+          <label>API Key *
+            <span id="api-key-hint" style="color:#888; font-size:12px; font-weight:400;"></span>
+          </label>
+          <input class="form-control" type="text" name="api_key" id="api-key-input" required
+                 placeholder="选择 AI 提供商后填入对应的 API Key">
+        </div>
+
+        <!-- TG Bot Token（Telegram 才显示）-->
+        <div class="form-group" id="form-tg-section" style="display:none;">
+          <label>客户 TG Bot Token <span style="color:#e53e3e; font-size:12px;">* 必填</span>
+            <span style="color:#888; font-size:12px;">（客户向 @BotFather 申请的 Bot）</span>
+          </label>
+          <input class="form-control mono" type="text" name="tg_bot_token" id="tg-bot-token"
+                 placeholder="1234567890:AAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+        </div>
+
+        <!-- QQ 凭证（QQ 才显示）-->
+        <div id="form-qq-section" style="display:none;">
+          <div style="background:#fffbeb; border:1px solid #fde68a; border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:13px; color:#92400e;">
+            📋 申请方式：手机 QQ 扫码登录 <a href="https://q.qq.com" target="_blank" style="color:#1890ff;">q.qq.com</a> → 创建机器人 → 选「API 模式」→ 获取 AppID 和 AppSecret（约 5 分钟）
+          </div>
+          <div class="form-group">
+            <label>QQ AppID <span style="color:#e53e3e; font-size:12px;">* 必填</span>
+              <span style="color:#888; font-size:12px;">（QQ 开放平台机器人 ID，纯数字）</span>
+            </label>
+            <input class="form-control mono" type="text" name="qq_app_id" id="qq-app-id"
+                   placeholder="例：1234567890（7-12 位纯数字）">
+          </div>
+          <div class="form-group">
+            <label>QQ AppSecret <span style="color:#e53e3e; font-size:12px;">* 必填</span>
+              <span style="color:#888; font-size:12px;">（32 位英数字串）</span>
+            </label>
+            <input class="form-control mono" type="text" name="qq_app_secret" id="qq-app-secret"
+                   placeholder="32 位英数字串">
+          </div>
+        </div>
+
+        <!-- 飞书凭证（飞书才显示）-->
+        <div id="form-feishu-section" style="display:none;">
+          <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:13px; color:#1e40af;">
+            📋 申请方式：用飞书账号登录 <a href="https://open.feishu.cn/app" target="_blank" style="color:#1890ff;">open.feishu.cn/app</a> → 创建企业自建应用 → 开启机器人能力 → 长连接事件订阅 → 获取 App ID / App Secret
+          </div>
+          <div class="form-group">
+            <label>飞书 App ID <span style="color:#e53e3e; font-size:12px;">* 必填</span>
+              <span style="color:#888; font-size:12px;">（格式：cli_xxxxxxxxxx）</span>
+            </label>
+            <input class="form-control mono" type="text" name="feishu_app_id" id="feishu-app-id"
+                   placeholder="cli_xxxxxxxxxxxxxx">
+          </div>
+          <div class="form-group">
+            <label>飞书 App Secret <span style="color:#e53e3e; font-size:12px;">* 必填</span></label>
+            <input class="form-control mono" type="text" name="feishu_app_secret" id="feishu-app-secret"
+                   placeholder="32 位英数字串">
+          </div>
+        </div>
+
+        <!-- 微信小程序说明（wechat 才显示）-->
+        <div id="form-wechat-section" style="display:none;">
+          <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:13px; color:#166534;">
+            📱 微信小程序渠道：用户只需扫码即可使用，<strong>不需要额外设置</strong><br>
+            <span style="color:#666;">部署完成后，后台会自动生成专属绑定二维码 → 发给客户 → 扫码即用</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>备注（可选）</label>
+          <input class="form-control" type="text" name="notes"
+                 placeholder="例：台北客户 John、LINE 官方账号用途">
+        </div>
+
+        <!-- ── 子代理 API Keys ── -->
+        <div class="form-group" style="border:1px solid #e2e8f0; border-radius:12px; padding:16px 18px; background:#f8fafc;">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+            <label style="margin:0; font-weight:700; color:#374151;">子代理 API Keys <span style="font-weight:400; font-size:12px; color:#94a3b8;">（选填）</span></label>
+            <button type="button" class="btn btn-default btn-sm" onclick="addExtraApiRow()">添加</button>
+          </div>
+          <div id="extra-api-rows">
+            <!-- 动态添加列 -->
+          </div>
+          <div style="font-size:11px; color:#94a3b8; margin-top:6px;">
+            支持：openai / anthropic / gemini / groq / deepseek / xai / mistral / perplexity
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+            <input type="checkbox" name="no_deploy" value="1" id="no-deploy-form">
+            <span>仅创建订单，<strong>不立即部署</strong></span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">🚀 创建并部署</button>
+      </form>
+    </div>
+
+  </div><!-- /card -->
+
+  <!-- ── 格式说明 ── -->
+  <div class="card" style="background:#fefce8; border:1px solid #fde68a;">
+    <div class="card-title" style="color:#92400e; border-bottom-color:#fef9c3;">支持的粘贴格式示例</div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; font-size:13px;">
+      <div>
+        <div style="font-weight:700; margin-bottom:6px; color:#92400e; font-size:12px;">Telegram + OpenAI</div>
+        <pre style="background:rgba(0,0,0,.04); border-radius:8px; padding:12px; font-size:12px; line-height:1.8; border:1px solid #fef3c7;">EC2: t3.large
+对接渠道: telegram
+AI api: sk-proj-xxx
+TG Bot Token: 1234567890:AAxxxxxxxxx
+ai_model: openai/gpt-4o-mini
+用户备注: 台北 John</pre>
+      </div>
+      <div>
+        <div style="font-weight:700; margin-bottom:6px; color:#92400e; font-size:12px;">微信小程序 + OpenAI</div>
+        <pre style="background:rgba(0,0,0,.04); border-radius:8px; padding:12px; font-size:12px; line-height:1.8; border:1px solid #fef3c7;">EC2: t3.large
+对接渠道: wechat
+AI api: sk-proj-xxx
+ai_model: openai/gpt-4.1-mini</pre>
+      </div>
+      <div>
+        <div style="font-weight:700; margin-bottom:6px; color:#92400e; font-size:12px;">可用模型列表</div>
+        <div style="font-size:12px; line-height:1.9; color:#78716c;">
+          <strong style="color:#57534e;">OpenAI：</strong>gpt-5.2 / gpt-5 / gpt-4.5 / gpt-4.1 / gpt-4.1-mini / gpt-4.1-nano / o4-mini / o3<br>
+          <strong style="color:#57534e;">Gemini：</strong>gemini-3.1-pro / gemini-3-flash / gemini-2.5-pro / gemini-2.5-flash / gemini-2.5-flash-lite<br>
+          <strong style="color:#57534e;">Claude：</strong>claude-sonnet-4-6 / claude-opus-4-6 / claude-haiku-4-5-20251001 / claude-3-7-sonnet-20250219<br>
+          <span style="color:#a8a29e; font-size:11px;">（不填 ai_model 自动依 API Key 前缀选默认）</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── AI 提供商 / 模型数据（2026 最新完整版）──
+const AI_MODELS = {
+  openai: {
+    hint: 'API Key 格式：sk-proj-... 或 sk-...',
+    placeholder: 'sk-proj-xxxxxxxxxxxxxxxxxxxxxxxx',
+    models: [
+      // ── GPT-5 系列（2026 最新）──
+      { value: 'openai/gpt-5.2',         label: 'GPT-5.2（最新旗舰）' },
+      { value: 'openai/gpt-5',           label: 'GPT-5（旗舰）' },
+      { value: 'openai/gpt-4.5',         label: 'GPT-4.5（2025 发布）' },
+      // ── GPT-4.1 系列 ──
+      { value: 'openai/gpt-4.1',         label: 'GPT-4.1（强指令遵循）' },
+      { value: 'openai/gpt-4.1-mini',    label: 'GPT-4.1 Mini（快速低成本）⭐ 推荐' },
+      { value: 'openai/gpt-4.1-nano',    label: 'GPT-4.1 Nano（最省钱）' },
+      // ── GPT-4o 系列 ──
+      { value: 'openai/gpt-4o',          label: 'GPT-4o（多模态旗舰）' },
+      { value: 'openai/gpt-4o-mini',     label: 'GPT-4o Mini（平衡性能与成本）' },
+      // ── o 系列推理模型 ──
+      { value: 'openai/o4-mini',         label: 'o4-mini（最新推理，快速）' },
+      { value: 'openai/o3',              label: 'o3（强推理）' },
+      { value: 'openai/o3-mini',         label: 'o3-mini（轻量推理）' },
+      { value: 'openai/o1',              label: 'o1（推理模型）' },
+      { value: 'openai/o1-mini',         label: 'o1-mini（轻量推理）' },
+      // ── 旧版 ──
+      { value: 'openai/gpt-4-turbo',     label: 'GPT-4 Turbo（旧版）' },
+      { value: 'openai/gpt-3.5-turbo',   label: 'GPT-3.5 Turbo（最省钱旧版）' },
+    ]
+  },
+  google: {
+    hint: 'API Key 格式：AIzaSy...',
+    placeholder: 'AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx',
+    models: [
+      // ── Gemini 3 系列（2026 最新）──
+      { value: 'google/gemini-3.1-pro',      label: 'Gemini 3.1 Pro（最强旗舰）' },
+      { value: 'google/gemini-3-flash',      label: 'Gemini 3 Flash（快速高效）⭐ 推荐' },
+      // ── Gemini 2.5 系列 ──
+      { value: 'google/gemini-2.5-pro',      label: 'Gemini 2.5 Pro（强推理，1M context）' },
+      { value: 'google/gemini-2.5-flash',    label: 'Gemini 2.5 Flash（快速推理）' },
+      { value: 'google/gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash-Lite（最省钱）' },
+      // ── Gemini 2.0 系列 ──
+      { value: 'google/gemini-2.0-flash',      label: 'Gemini 2.0 Flash（稳定快速）' },
+      { value: 'google/gemini-2.0-flash-lite',  label: 'Gemini 2.0 Flash-Lite（轻量）' },
+      // ── Gemini 1.5 系列（旧版）──
+      { value: 'google/gemini-1.5-pro',        label: 'Gemini 1.5 Pro（旧版强力）' },
+      { value: 'google/gemini-1.5-flash',      label: 'Gemini 1.5 Flash（旧版快速）' },
+      { value: 'google/gemini-1.5-flash-8b',   label: 'Gemini 1.5 Flash 8B（最轻量）' },
+    ]
+  },
+  anthropic: {
+    hint: 'API Key 格式：sk-ant-api03-...',
+    placeholder: 'sk-ant-api03-xxxxxxxxxxxxxxxxxxxxxxxx',
+    models: [
+      // ── Claude 4.x 系列（2026 最新，官方 API ID）──
+      { value: 'anthropic/claude-opus-4-6',          label: 'Claude Opus 4.6（顶级旗舰）' },
+      { value: 'anthropic/claude-sonnet-4-6',        label: 'Claude Sonnet 4.6（最新平衡）⭐ 推荐' },
+      { value: 'anthropic/claude-haiku-4-5-20251001', label: 'Claude Haiku 4.5（最快最省）' },
+      // ── Claude 4.x 旧版 ──
+      { value: 'anthropic/claude-sonnet-4-5-20250929', label: 'Claude Sonnet 4.5' },
+      { value: 'anthropic/claude-opus-4-5-20251101',   label: 'Claude Opus 4.5' },
+      { value: 'anthropic/claude-opus-4-1-20250805',   label: 'Claude Opus 4.1' },
+      { value: 'anthropic/claude-sonnet-4-20250514',   label: 'Claude Sonnet 4.0' },
+      { value: 'anthropic/claude-opus-4-20250514',     label: 'Claude Opus 4.0' },
+      // ── Claude 3.x 系列 ──
+      { value: 'anthropic/claude-3-7-sonnet-20250219', label: 'Claude 3.7 Sonnet（混合推理）' },
+      { value: 'anthropic/claude-3-5-sonnet-20241022', label: 'Claude 3.5 Sonnet' },
+      { value: 'anthropic/claude-3-5-haiku-20241022',  label: 'Claude 3.5 Haiku' },
+    ]
+  }
+};
+
+function onProviderChange(provider) {
+  const modelSel = document.getElementById('ai-model');
+  const apiInput = document.getElementById('api-key-input');
+  const apiHint  = document.getElementById('api-key-hint');
+
+  modelSel.innerHTML = '';
+  if (!provider || !AI_MODELS[provider]) {
+    modelSel.innerHTML = '<option value="">← 先选择 AI 提供商</option>';
+    modelSel.disabled = true;
+    apiInput.placeholder = '选择 AI 提供商后填入对应的 API Key';
+    apiHint.textContent = '';
+    return;
+  }
+  const data = AI_MODELS[provider];
+  data.models.forEach((m, i) => {
+    const opt = document.createElement('option');
+    opt.value = m.value;
+    opt.textContent = m.label;
+    if (i === 0) opt.selected = true;
+    modelSel.appendChild(opt);
+  });
+  modelSel.disabled = false;
+  apiInput.placeholder = data.placeholder;
+  apiHint.textContent = '（' + data.hint + '）';
+}
+
+function onChannelChange(val) {
+  document.getElementById('form-tg-section').style.display      = (val === 'telegram') ? '' : 'none';
+  document.getElementById('form-qq-section').style.display      = (val === 'qq')       ? '' : 'none';
+  document.getElementById('form-feishu-section').style.display  = (val === 'feishu')   ? '' : 'none';
+  document.getElementById('form-wechat-section').style.display  = (val === 'wechat')   ? '' : 'none';
+  // required 属性
+  const tgInput = document.getElementById('tg-bot-token');
+  if (tgInput) tgInput.required = (val === 'telegram');
+  const qqId  = document.getElementById('qq-app-id');
+  const qqSec = document.getElementById('qq-app-secret');
+  if (qqId)  qqId.required  = (val === 'qq');
+  if (qqSec) qqSec.required = (val === 'qq');
+  const fsId  = document.getElementById('feishu-app-id');
+  const fsSec = document.getElementById('feishu-app-secret');
+  if (fsId)  fsId.required  = (val === 'feishu');
+  if (fsSec) fsSec.required = (val === 'feishu');
+}
+
+function switchTab(tab) {
+  const rawPanel  = document.getElementById('panel-raw');
+  const formPanel = document.getElementById('panel-form');
+  const rawTab    = document.getElementById('tab-raw');
+  const formTab   = document.getElementById('tab-form');
+  if (tab === 'raw') {
+    rawPanel.style.display  = '';
+    formPanel.style.display = 'none';
+    rawTab.style.color  = '#6366f1'; rawTab.style.background  = '#fff'; rawTab.style.borderBottomColor  = '#fff';
+    formTab.style.color = '#94a3b8'; formTab.style.background = '#f8f9fc'; formTab.style.borderBottomColor = '#e2e8f0';
+  } else {
+    rawPanel.style.display  = 'none';
+    formPanel.style.display = '';
+    formTab.style.color = '#6366f1'; formTab.style.background = '#fff';    formTab.style.borderBottomColor = '#fff';
+    rawTab.style.color  = '#94a3b8'; rawTab.style.background  = '#f8f9fc'; rawTab.style.borderBottomColor  = '#e2e8f0';
+  }
+}
+
+// 更新提交按钮文字
+document.getElementById('no-deploy-raw').addEventListener('change', function() {
+  const btn = document.getElementById('submit-btn');
+  btn.textContent = this.checked ? '📋 仅创建订单' : '🚀 创建并部署';
+});
+
+// ── 部署遮罩 ──
+function onDeploySubmit(e, form) {
+  const noDeployCheck = form.querySelector('[name="no_deploy"]');
+  if (noDeployCheck && noDeployCheck.checked) return; // 仅创建不需要 overlay
+  showDeployOverlay();
+  // 让表单正常提交（full page redirect），overlay 会随跳页消失
+}
+
+function showDeployOverlay() {
+  const ov = document.getElementById('deploy-overlay');
+  ov.style.display = 'flex';
+  const steps = [
+    [0,  5,  '正在创建订单…'],
+    [5,  30, '启动 EC2 服务器中…'],
+    [30, 90, '安装 Node.js + OpenClaw…'],
+    [90, 180,'配置 AI 模型与通信渠道…'],
+    [180,300,'安装 Skills 与工作区文件…'],
+    [300,480,'等待服务就绪…'],
+  ];
+  let start = Date.now();
+  const bar   = document.getElementById('overlay-bar');
+  const sub   = document.getElementById('overlay-sub');
+  const elapsed = document.getElementById('overlay-elapsed');
+  const timer = setInterval(() => {
+    const sec = Math.floor((Date.now() - start) / 1000);
+    elapsed.textContent = sec + ' 秒';
+    const pct = Math.min(95, (sec / 480) * 100);
+    bar.style.width = pct + '%';
+    for (const [from, to, msg] of steps) {
+      if (sec >= from && sec < to) { sub.textContent = msg; break; }
+    }
+  }, 1000);
+}
+
+// ── 实时解析预览 ──
+let _parseTimer = null;
+function previewParse() {
+  clearTimeout(_parseTimer);
+  const raw = document.getElementById('raw-input').value.trim();
+  if (!raw) { document.getElementById('parse-preview').style.display = 'none'; return; }
+  _parseTimer = setTimeout(() => {
+    fetch('/api/parse', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({raw})
+    })
+    .then(r => r.json())
+    .then(data => {
+      const p = data.parsed;
+      const errs = data.errors;
+      let extraRows = '';
+      if (p.channel === 'telegram' && p.tg_bot_token) {
+        extraRows += `<div><span style="color:#888">TG Bot Token：</span><strong>${p.tg_bot_token.substring(0,15)}...</strong> ✅</div>`;
+      } else if (p.channel === 'telegram') {
+        extraRows += `<div style="color:#d46b08"><span style="color:#888">TG Bot Token：</span>⚠️ 未提供，请粘贴客户的 Bot Token</div>`;
+      }
+      if (p.channel === 'qq') {
+        extraRows += `<div><span style="color:#888">QQ AppID：</span>${p.qq_app_id ? '✅ 已提供' : '⚠️ 未提供'}</div>`;
+        extraRows += `<div><span style="color:#888">QQ AppSecret：</span>${p.qq_app_secret ? '✅ 已提供' : '⚠️ 未提供'}</div>`;
+      }
+      if (p.channel === 'feishu') {
+        extraRows += `<div><span style="color:#888">飞书 App ID：</span>${p.feishu_app_id ? '✅ 已提供' : '⚠️ 未提供'}</div>`;
+        extraRows += `<div><span style="color:#888">飞书 App Secret：</span>${p.feishu_app_secret ? '✅ 已提供' : '⚠️ 未提供'}</div>`;
+      }
+      if (p.channel === 'wechat') {
+        extraRows += `<div><span style="color:#2e7d32">📱 微信小程序：部署后自动生成绑定二维码</span></div>`;
+      }
+      if (p.ai_model) {
+        extraRows += `<div><span style="color:#888">AI 模型：</span><strong>${p.ai_model}</strong> ✅</div>`;
+      }
+      let html = `
+        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:6px 20px; font-size:12px;">
+          <div><span style="color:#888">套餐：</span><strong>${p.plan || '未识别'}</strong> ${p.ec2_type ? '(' + p.ec2_type + ')' : ''}</div>
+          <div><span style="color:#888">通信渠道：</span><strong>${p.channel || '未识别'}</strong></div>
+          <div><span style="color:#888">API Key：</span><strong>${p.api_key ? p.api_key.substring(0,12) + '...' : '未识别'}</strong></div>
+          <div><span style="color:#888">备注：</span>${p.notes || '—'}</div>
+          ${extraRows}
+        </div>`;
+      if (errs.length) {
+        html += `<div style="margin-top:8px; color:#d46b08;">⚠️ 缺少：${errs.join('、')}</div>`;
+      } else {
+        html += `<div style="margin-top:8px; color:#389e0d;">✅ 解析成功，可以部署</div>`;
+      }
+      document.getElementById('parse-result').innerHTML = html;
+      document.getElementById('parse-preview').style.display = '';
+    })
+    .catch(() => {});
+  }, 400);
+}
+
+// ── 子代理 API Keys 动态列 ──
+var PROVIDER_OPTIONS = ['openai','anthropic','gemini','groq','deepseek','xai','mistral','perplexity','cohere'];
+
+var CREATE_PROVIDER_MODELS = {
+  'openai':     ['gpt-4o','gpt-4o-mini','o3-mini','o1','gpt-4-turbo','gpt-3.5-turbo'],
+  'anthropic':  ['claude-opus-4-5','claude-sonnet-4-5','claude-3-5-haiku-20241022','claude-3-opus-20240229'],
+  'gemini':     ['gemini-2.0-flash','gemini-2.0-flash-lite','gemini-1.5-pro','gemini-1.5-flash'],
+  'groq':       ['llama-3.3-70b-versatile','llama-3.1-8b-instant','mixtral-8x7b-32768','gemma2-9b-it'],
+  'deepseek':   ['deepseek-chat','deepseek-reasoner'],
+  'xai':        ['grok-2','grok-2-mini','grok-beta'],
+  'mistral':    ['mistral-large-latest','mistral-small-latest','open-mistral-nemo'],
+  'perplexity': ['sonar-pro','sonar','llama-3.1-sonar-large-128k-online'],
+  'cohere':     ['command-r-plus','command-r','command-light']
+};
+
+function createUpdateModelSel(providerSel, modelSel) {
+  var prov = providerSel.value;
+  var models = CREATE_PROVIDER_MODELS[prov] || [];
+  while (modelSel.options.length > 1) { modelSel.remove(1); }
+  models.forEach(function(m) {
+    var opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = m;
+    modelSel.appendChild(opt);
+  });
+  modelSel.disabled = (models.length === 0);
+}
+
+function addExtraApiRow(provider, key) {
+  provider = provider || '';
+  key = key || '';
+  var container = document.getElementById('extra-api-rows');
+  var row = document.createElement('div');
+  row.style.cssText = 'display:grid; grid-template-columns:130px 1fr 160px 32px; gap:6px; margin-bottom:8px; align-items:center;';
+
+  // Provider select
+  var sel = document.createElement('select');
+  sel.name = 'extra_provider[]';
+  sel.className = 'form-control';
+  sel.style.cssText = 'font-size:13px;';
+  var defOpt = document.createElement('option');
+  defOpt.value = '';
+  defOpt.textContent = '提供商';
+  sel.appendChild(defOpt);
+  PROVIDER_OPTIONS.forEach(function(p) {
+    var opt = document.createElement('option');
+    opt.value = p;
+    opt.textContent = p;
+    if (p === provider) { opt.selected = true; }
+    sel.appendChild(opt);
+  });
+
+  // API Key input
+  var inp = document.createElement('input');
+  inp.name = 'extra_key[]';
+  inp.className = 'form-control mono';
+  inp.type = 'text';
+  inp.value = key;
+  inp.placeholder = 'API Key';
+  inp.style.cssText = 'font-size:12px;';
+
+  // Model select
+  var modelSel = document.createElement('select');
+  modelSel.name = 'extra_model[]';
+  modelSel.className = 'form-control';
+  modelSel.style.cssText = 'font-size:12px;';
+  var modelDef = document.createElement('option');
+  modelDef.value = '';
+  modelDef.textContent = '选择模型';
+  modelSel.appendChild(modelDef);
+  createUpdateModelSel(sel, modelSel);
+  sel.addEventListener('change', function() { createUpdateModelSel(sel, modelSel); });
+
+  // Remove button
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.textContent = '×';
+  btn.style.cssText = 'background:none; border:none; color:#f00; font-size:20px; cursor:pointer; padding:0; line-height:1; text-align:center;';
+  btn.addEventListener('click', function() { row.remove(); });
+
+  row.appendChild(sel);
+  row.appendChild(inp);
+  row.appendChild(modelSel);
+  row.appendChild(btn);
+  container.appendChild(row);
+}
+</script>
+
+{% endblock %}

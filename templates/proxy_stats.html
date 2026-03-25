@@ -1,0 +1,547 @@
+{% extends "base.html" %}
+{% block title %}DeepSeek 餘額監控 — 大閘蟹後台{% endblock %}
+{% block page_title %}DeepSeek 充值監控{% endblock %}
+{% block content %}
+
+<div style="max-width:1100px;">
+
+<!-- Flash messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for cat, msg in messages %}
+    <div style="padding:10px 16px;margin-bottom:16px;border-radius:8px;font-size:14px;
+      {% if cat == 'error' %}background:#fee2e2;color:#991b1b;{% else %}background:#dcfce7;color:#166534;{% endif %}">
+      {{ msg }}
+    </div>
+  {% endfor %}
+{% endwith %}
+
+<!-- ── 核心指標 ── -->
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px;">
+  <div class="stat-card">
+    <div class="num">${{ "%.2f"|format(stats.total_balance_usd) }}</div>
+    <div class="label">用戶總餘額 (USD)</div>
+  </div>
+  <div class="stat-card" style="border-color:#f59e0b;">
+    <div class="num" style="color:#f59e0b;">${{ "%.2f"|format(stats.recommended_deepseek_usd) }}</div>
+    <div class="label">建議 DeepSeek 最低充值</div>
+  </div>
+  <div class="stat-card" style="border-color:#10b981;">
+    <div class="num" style="color:#10b981;">{{ stats.active_orders }}</div>
+    <div class="label">活躍 Proxy 訂單</div>
+  </div>
+  <div class="stat-card">
+    <div class="num">{{ keys|length }}</div>
+    <div class="label">API Key 總數</div>
+  </div>
+</div>
+
+<!-- ── 30 天使用量 ── -->
+<div class="card" style="padding:20px;margin-bottom:24px;">
+  <h2 style="font-weight:700;margin-bottom:16px;">近 30 天 DeepSeek 使用量</h2>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;">
+    <div>
+      <div style="font-size:24px;font-weight:800;">${{ "%.4f"|format(stats.total_cost_usd) }}</div>
+      <div style="color:#888;font-size:13px;">API 費用 (USD)</div>
+    </div>
+    <div>
+      <div style="font-size:24px;font-weight:800;">{{ "{:,}".format(stats.total_tokens|int) }}</div>
+      <div style="color:#888;font-size:13px;">Token 總數</div>
+    </div>
+    <div>
+      <div style="font-size:24px;font-weight:800;">{{ "{:,}".format(stats.total_calls|int) }}</div>
+      <div style="color:#888;font-size:13px;">API 呼叫次數</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 用戶搜尋 ── -->
+<div class="card" style="padding:20px;margin-bottom:24px;">
+  <h2 style="font-weight:700;margin-bottom:14px;">🔍 搜尋用戶</h2>
+  <p style="color:#888;font-size:13px;margin-bottom:12px;">輸入微信 Open ID、訂單 ID 或 User ID 查詢</p>
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <input id="search-input" type="text" placeholder="oXxxxx... 或 ORD-2026-0159"
+      style="flex:1;padding:9px 14px;border:1px solid #e5e7eb;border-radius:8px;font-size:14px;outline:none;">
+    <button onclick="doSearch()"
+      style="padding:9px 20px;background:#3b6ef8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;">搜尋</button>
+    <button onclick="clearSearch()"
+      style="padding:9px 16px;background:#f3f4f6;color:#333;border:none;border-radius:8px;cursor:pointer;font-size:14px;">清除</button>
+  </div>
+  <div id="search-results" style="display:none;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="border-bottom:1px solid #e5e7eb;color:#6b7280;background:#f9fafb;">
+          <th style="text-align:left;padding:8px 12px;">微信 Open ID</th>
+          <th style="text-align:left;padding:8px 12px;">訂單 ID</th>
+          <th style="text-align:right;padding:8px 12px;">Proxy 餘額</th>
+          <th style="text-align:left;padding:8px 12px;">DeepSeek Key</th>
+          <th style="text-align:center;padding:8px 12px;">狀態</th>
+        </tr>
+      </thead>
+      <tbody id="search-tbody"></tbody>
+    </table>
+    <p id="search-empty" style="display:none;color:#888;text-align:center;padding:20px;">找不到符合的用戶</p>
+  </div>
+</div>
+
+<!-- ── DeepSeek API Key 池 ── -->
+<div class="card" style="padding:20px;margin-bottom:24px;">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+    <h2 style="font-weight:700;">🔑 DeepSeek API Key 池</h2>
+    <div style="display:flex;gap:8px;">
+      <button id="rebalance-btn" onclick="rebalance()"
+        style="padding:7px 16px;background:#6366f1;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">
+        ⚖️ 重新分流
+      </button>
+      <button id="show-add-btn" onclick="showAddForm()"
+        style="padding:7px 16px;background:#10b981;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">
+        ＋ 新增 Key
+      </button>
+      <button onclick="clearTestData()"
+        style="padding:7px 16px;background:#ef4444;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">
+        🗑️ 清除測試資料
+      </button>
+    </div>
+  </div>
+
+  <!-- 新增 key 表單 -->
+  <div id="add-key-form" style="display:none;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px;">
+    <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;">新增 DeepSeek API Key</h3>
+    <form method="post" action="/admin/deepseek-keys/add">
+      <div style="display:grid;grid-template-columns:1fr 2fr auto;gap:10px;align-items:end;">
+        <div>
+          <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">Key 名稱（選填）</label>
+          <input name="key_name" type="text" placeholder="如：Key-1" style="width:100%;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">DeepSeek API Key *</label>
+          <input name="api_key" type="text" placeholder="sk-xxxxxxxxxxxxxxxx" required
+            style="width:100%;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;font-family:monospace;">
+        </div>
+        <div>
+          <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">最多幾個 Proxy</label>
+          <input name="max_proxies" type="number" value="100" min="1" max="500"
+            style="width:90px;padding:8px 10px;border:1px solid #e5e7eb;border-radius:6px;font-size:13px;">
+        </div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button type="submit"
+          style="padding:8px 20px;background:#3b6ef8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;">
+          ✅ 新增
+        </button>
+        <button type="button" onclick="hideAddForm()"
+          style="padding:8px 16px;background:#e5e7eb;color:#333;border:none;border-radius:8px;cursor:pointer;font-size:13px;">
+          取消
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 分流說明 -->
+  <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:#1e40af;">
+    💡 <strong>分流邏輯：</strong>每支 key 設定最大 proxy 上限（預設 100 人）。新訂單自動分配到最空閒的 key。
+    同一 DeepSeek 帳戶下的多支 key <strong>共享帳戶餘額</strong>，但各自有獨立 RPM 速率限制，達到真正分流效果。
+  </div>
+
+  {% if keys %}
+  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead>
+      <tr style="border-bottom:1px solid #e5e7eb;color:#6b7280;background:#f9fafb;">
+        <th style="text-align:left;padding:8px 12px;">名稱</th>
+        <th style="text-align:left;padding:8px 12px;">API Key</th>
+        <th style="text-align:center;padding:8px 12px;">Proxy 數 / 上限</th>
+        <th style="text-align:right;padding:8px 12px;">Proxy 用戶餘額</th>
+        <th style="text-align:right;padding:8px 12px;">DeepSeek 帳戶餘額</th>
+        <th style="text-align:center;padding:8px 12px;">狀態</th>
+        <th style="text-align:center;padding:8px 12px;">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for k in keys %}
+      {% set pct = (k.total_proxies / k.max_proxies * 100)|int if k.max_proxies > 0 else 0 %}
+      <tr style="border-bottom:1px solid #f3f4f6;">
+        <td style="padding:10px 12px;font-weight:600;">{{ k.key_name or '—' }}</td>
+        <td style="padding:10px 12px;font-family:monospace;color:#888;">
+          {{ k.api_key[:6] }}****{{ k.api_key[-4:] }}
+        </td>
+        <td style="text-align:center;padding:10px 12px;">
+          <div style="margin-bottom:4px;">
+            <strong style="{% if pct >= 90 %}color:#ef4444;{% elif pct >= 70 %}color:#f59e0b;{% else %}color:#10b981;{% endif %}">
+              {{ k.total_proxies }}</strong> / {{ k.max_proxies }}
+            <span style="font-size:11px;color:#888;margin-left:2px;">({{ k.active_proxies }} 活躍)</span>
+            {% if pct >= 90 %}
+            <span style="font-size:11px;color:#ef4444;margin-left:4px;">⚠ 滿載</span>
+            {% elif pct >= 70 %}
+            <span style="font-size:11px;color:#f59e0b;margin-left:4px;">快滿</span>
+            {% endif %}
+          </div>
+          <div style="background:#e5e7eb;border-radius:99px;height:5px;width:80px;margin:0 auto;">
+            <div style="background:{% if pct >= 90 %}#ef4444{% elif pct >= 70 %}#f59e0b{% else %}#10b981{% endif %};
+              border-radius:99px;height:5px;width:{{ [pct, 100]|min }}%;"></div>
+          </div>
+        </td>
+        <td style="text-align:right;padding:10px 12px;">
+          ¥{{ "%.2f"|format((k.proxies_balance_usd|float) * 7.3) }}
+          <span style="font-size:10px;color:#888;display:block;">(${{ "%.2f"|format(k.proxies_balance_usd|float) }})</span>
+        </td>
+        <td style="text-align:right;padding:10px 12px;">
+          <span id="ds-balance-{{ k.id }}" style="color:#888;font-size:12px;">—</span>
+          <button onclick="fetchDsBalance({{ k.id }})"
+            style="padding:2px 8px;font-size:11px;border:1px solid #e5e7eb;border-radius:4px;background:#fff;cursor:pointer;margin-left:4px;">
+            查詢
+          </button>
+        </td>
+        <td style="text-align:center;padding:10px 12px;">
+          <span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:600;
+            {% if k.is_active %}background:#dcfce7;color:#16a34a;{% else %}background:#f3f4f6;color:#6b7280;{% endif %}">
+            {{ '啟用' if k.is_active else '停用' }}
+          </span>
+        </td>
+        <td style="text-align:center;padding:10px 12px;">
+          <div style="display:flex;gap:4px;justify-content:center;">
+            <form method="post" action="/admin/deepseek-keys/{{ k.id }}/toggle" style="display:inline;">
+              <input type="hidden" name="active" value="{{ 'false' if k.is_active else 'true' }}">
+              <button type="submit"
+                style="padding:4px 10px;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;background:#fff;cursor:pointer;">
+                {{ '停用' if k.is_active else '啟用' }}
+              </button>
+            </form>
+            <form method="post" action="/admin/deepseek-keys/{{ k.id }}/delete" style="display:inline;">
+              <button type="submit"
+                style="padding:4px 10px;font-size:12px;border:1px solid #fca5a5;border-radius:6px;background:#fff;color:#ef4444;cursor:pointer;"
+                data-confirm="確定刪除此 Key？相關 Proxy 訂單將設為未分配。">
+                刪除
+              </button>
+            </form>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:#888;text-align:center;padding:30px;">尚未新增任何 API Key，點右上角「新增 Key」開始設定</p>
+  {% endif %}
+</div>
+
+<!-- ── 充值建議 ── -->
+<div class="card" style="padding:20px;margin-bottom:24px;border-color:#f59e0b;">
+  <h2 style="font-weight:700;margin-bottom:12px;">💡 充值建議</h2>
+  <p style="color:#ccc;font-size:14px;">
+    目前用戶總餘額 <strong>${{ "%.2f"|format(stats.total_balance_usd) }}</strong> USD，
+    建議在 DeepSeek 帳戶中至少保持 <strong style="color:#f59e0b;">${{ "%.2f"|format(stats.recommended_deepseek_usd) }}</strong> USD（含 20% 安全邊際）。
+  </p>
+  <p style="color:#888;font-size:12px;margin-top:8px;">
+    DeepSeek 充值地址：<a href="https://platform.deepseek.com" target="_blank" style="color:#6366f1;">platform.deepseek.com</a>
+  </p>
+</div>
+
+<!-- ── Proxy 訂單列表 ── -->
+<div class="card" style="padding:20px;">
+  <h2 style="font-weight:700;margin-bottom:16px;">Proxy 訂單列表</h2>
+  {% if stats.orders %}
+  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead>
+      <tr style="border-bottom:1px solid #e5e7eb;color:#6b7280;">
+        <th style="text-align:left;padding:8px 12px;">訂單 ID</th>
+        <th style="text-align:right;padding:8px 12px;">餘額 (USD)</th>
+        <th style="text-align:right;padding:8px 12px;">已購 (元)</th>
+        <th style="text-align:center;padding:8px 12px;">狀態</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for o in stats.orders %}
+      <tr style="border-bottom:1px solid #f3f4f6;">
+        <td style="padding:10px 12px;">
+          <a href="/order/{{ o.order_id }}" style="color:#3b6ef8;">{{ o.order_id }}</a>
+        </td>
+        <td style="text-align:right;padding:10px 12px;
+          {% if o.ai_balance_usd < 0.5 %}color:#ef4444;font-weight:700;{% endif %}">
+          ${{ "%.4f"|format(o.ai_balance_usd) }}
+        </td>
+        <td style="text-align:right;padding:10px 12px;color:#888;">
+          ¥{{ "%.0f"|format(o.ai_credit_yuan) }}
+        </td>
+        <td style="text-align:center;padding:10px 12px;">
+          <span style="display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:600;
+            {% if o.status == 'active' %}background:#dcfce7;color:#16a34a;
+            {% elif o.status == 'deploying' %}background:#dbeafe;color:#2563eb;
+            {% else %}background:#f3f4f6;color:#6b7280;{% endif %}">
+            {{ o.status }}
+          </span>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p style="color:#888;text-align:center;padding:40px;">目前沒有 Proxy 模式訂單</p>
+  {% endif %}
+</div>
+
+</div>
+
+<script>
+(function() {
+'use strict';
+
+// ── 新增 Key 表單 ──
+function showAddForm() {
+  document.getElementById('add-key-form').style.display = 'block';
+  document.getElementById('show-add-btn').style.display = 'none';
+}
+function hideAddForm() {
+  document.getElementById('add-key-form').style.display = 'none';
+  document.getElementById('show-add-btn').style.display = '';
+}
+window.showAddForm = showAddForm;
+window.hideAddForm = hideAddForm;
+
+// ── 刪除確認 ──
+document.querySelectorAll('button[data-confirm]').forEach(function(btn) {
+  btn.addEventListener('click', function(e) {
+    if (!confirm(btn.getAttribute('data-confirm'))) e.preventDefault();
+  });
+});
+
+// ── 搜尋用戶 ──
+function makeCell(text, opts) {
+  var td = document.createElement('td');
+  td.style.padding = '9px 12px';
+  if (opts && opts.style) Object.assign(td.style, opts.style);
+  td.textContent = text;
+  return td;
+}
+
+function doSearch() {
+  var q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+  fetch('/api/proxy/search?q=' + encodeURIComponent(q))
+    .then(function(r) { return r.json(); })
+    .then(function(rows) {
+      var tb    = document.getElementById('search-tbody');
+      var empty = document.getElementById('search-empty');
+      var wrap  = document.getElementById('search-results');
+      tb.textContent = '';
+      wrap.style.display = 'block';
+      if (!rows.length) { empty.style.display = 'block'; return; }
+      empty.style.display = 'none';
+      rows.forEach(function(r) {
+        var tr = document.createElement('tr');
+        tr.style.borderBottom = '1px solid #f3f4f6';
+
+        // 微信 Open ID
+        tr.appendChild(makeCell(r.wechat_open_id || '—', {style:{fontFamily:'monospace',fontSize:'12px'}}));
+
+        // 訂單 ID (link)
+        var tdOrder = document.createElement('td');
+        tdOrder.style.padding = '9px 12px';
+        var a = document.createElement('a');
+        a.href = '/order/' + encodeURIComponent(r.order_id);
+        a.textContent = r.order_id;
+        a.style.color = '#3b6ef8';
+        tdOrder.appendChild(a);
+        tr.appendChild(tdOrder);
+
+        // Proxy 餘額
+        var bal = parseFloat(r.ai_balance_usd).toFixed(4);
+        var tdBal = makeCell('$' + bal);
+        tdBal.style.textAlign = 'right';
+        if (parseFloat(r.ai_balance_usd) < 0.5) { tdBal.style.color = '#ef4444'; tdBal.style.fontWeight = '700'; }
+        tr.appendChild(tdBal);
+
+        // DeepSeek Key
+        var tdKey = document.createElement('td');
+        tdKey.style.padding = '9px 12px';
+        tdKey.style.fontSize = '12px';
+        if (r.assigned_key_name) {
+          var kName = document.createElement('strong');
+          kName.textContent = r.assigned_key_name;
+          var kMask = document.createElement('span');
+          kMask.style.color = '#bbb';
+          kMask.style.fontFamily = 'monospace';
+          kMask.textContent = ' ' + r.assigned_api_key_masked;
+          tdKey.appendChild(kName);
+          tdKey.appendChild(kMask);
+        } else {
+          tdKey.textContent = '⚠ 未分配';
+          tdKey.style.color = '#f59e0b';
+        }
+        tr.appendChild(tdKey);
+
+        // 狀態
+        var tdStatus = document.createElement('td');
+        tdStatus.style.padding = '9px 12px';
+        tdStatus.style.textAlign = 'center';
+        var badge = document.createElement('span');
+        badge.style.display = 'inline-block';
+        badge.style.padding = '2px 10px';
+        badge.style.borderRadius = '99px';
+        badge.style.fontSize = '12px';
+        badge.style.fontWeight = '600';
+        if (r.status === 'active') {
+          badge.style.background = '#dcfce7'; badge.style.color = '#16a34a';
+        } else {
+          badge.style.background = '#f3f4f6'; badge.style.color = '#6b7280';
+        }
+        badge.textContent = r.status;
+        tdStatus.appendChild(badge);
+        tr.appendChild(tdStatus);
+
+        tb.appendChild(tr);
+      });
+    })
+    .catch(function(e) { alert('搜尋失敗：' + e); });
+}
+window.doSearch = doSearch;
+
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('search-results').style.display = 'none';
+  document.getElementById('search-tbody').textContent = '';
+}
+window.clearSearch = clearSearch;
+
+document.getElementById('search-input').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') doSearch();
+});
+
+// ── 重新分流 ──
+function rebalance() {
+  if (!confirm('確定重新分流？系統將把未分配的訂單指派給空閒的 Key，並搬移超載 Key 的多餘訂單。')) return;
+  var btn = document.getElementById('rebalance-btn');
+  btn.disabled = true;
+  btn.textContent = '分流中...';
+  fetch('/api/proxy/rebalance', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      alert('✅ 分流完成！\n新分配：' + d.assigned + ' 筆\n搬移：' + d.rebalanced + ' 筆');
+      location.reload();
+    })
+    .catch(function(e) {
+      alert('分流失敗：' + e);
+      btn.disabled = false;
+      btn.textContent = '⚖️ 重新分流';
+    });
+}
+window.rebalance = rebalance;
+
+function clearTestData() {
+  if (!confirm('⚠️ 確定要清除所有 DeepSeek API Keys 並重置訂單分配？\n此操作不可還原。')) return;
+  fetch('/admin/proxy/clear-test-data', { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.ok) {
+        alert('✅ 清除完成！\n刪除 Key：' + d.deleted_keys + ' 筆\n重置訂單：' + d.reset_orders + ' 筆');
+        location.reload();
+      } else {
+        alert('❌ 清除失敗：' + d.error);
+      }
+    })
+    .catch(function(e) { alert('請求失敗：' + e); });
+}
+window.clearTestData = clearTestData;
+
+// ── 查詢 DeepSeek 帳戶餘額 ──
+function fetchDsBalance(keyId) {
+  var el = document.getElementById('ds-balance-' + keyId);
+  el.textContent = '查詢中...';
+  fetch('/api/proxy/deepseek-balance/' + keyId)
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      if (d.error) { el.textContent = '查詢失敗'; return; }
+      var bal = d.cny_balance ? '¥' + d.cny_balance : (d.usd_balance ? '$' + d.usd_balance : '—');
+      el.textContent = bal + (d.is_available ? '' : ' ⚠');
+      el.style.color = d.is_available ? '#10b981' : '#ef4444';
+      el.style.fontWeight = '700';
+    })
+    .catch(function() { el.textContent = '查詢失敗'; });
+}
+window.fetchDsBalance = fetchDsBalance;
+
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════ -->
+<!--  用戶充值記錄                                  -->
+<!-- ══════════════════════════════════════════════ -->
+<div style="margin-top:32px;">
+  <h2 style="font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+    💰 用戶充值記錄
+    <span style="font-size:12px;color:#888;font-weight:400;">（最新 50 筆）</span>
+    <a href="/recharge" target="_blank"
+       style="margin-left:auto;font-size:12px;background:#1e4028;color:#4ade80;
+              padding:4px 12px;border-radius:6px;text-decoration:none;font-weight:600;">
+      🔗 充值頁面
+    </a>
+  </h2>
+
+  {% if history %}
+  <div style="overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead>
+        <tr style="border-bottom:1px solid #2d3748;color:#888;">
+          <th style="padding:10px 12px;text-align:left;font-weight:600;">時間</th>
+          <th style="padding:10px 12px;text-align:left;font-weight:600;">微信號</th>
+          <th style="padding:10px 12px;text-align:left;font-weight:600;">訂單</th>
+          <th style="padding:10px 12px;text-align:right;font-weight:600;">金額 (¥)</th>
+          <th style="padding:10px 12px;text-align:right;font-weight:600;">金額 ($)</th>
+          <th style="padding:10px 12px;text-align:right;font-weight:600;">充值後餘額</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in history %}
+        <tr style="border-bottom:1px solid #1e2433;transition:background .15s;"
+            onmouseover="this.style.background='#1a2030'" onmouseout="this.style.background=''">
+          <td style="padding:10px 12px;color:#888;white-space:nowrap;">
+            {{ row.created_at.strftime('%m/%d %H:%M') if row.created_at else '—' }}
+          </td>
+          <td style="padding:10px 12px;font-weight:600;">
+            {{ row.wechat_id or row.user_id or '—' }}
+          </td>
+          <td style="padding:10px 12px;font-family:monospace;color:#888;font-size:12px;">
+            …{{ row.order_id[-8:] }}
+          </td>
+          <td style="padding:10px 12px;text-align:right;font-weight:700;color:#4ade80;">
+            +¥{{ "%.0f"|format(row.amount_yuan) }}
+          </td>
+          <td style="padding:10px 12px;text-align:right;color:#888;">
+            ${{ "%.4f"|format(row.amount_usd) }}
+          </td>
+          <td style="padding:10px 12px;text-align:right;color:#ccc;">
+            ¥{{ "%.1f"|format((row.balance_after_usd|float or 0) * 7.3) }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 統計小結 -->
+  <div style="display:flex;gap:16px;margin-top:16px;flex-wrap:wrap;">
+    <div style="background:#141820;border:1px solid #1e2433;border-radius:10px;padding:14px 18px;min-width:140px;">
+      <div style="font-size:11px;color:#888;margin-bottom:4px;">總充值次數</div>
+      <div style="font-size:22px;font-weight:900;color:#4ade80;">{{ history|length }}</div>
+    </div>
+    <div style="background:#141820;border:1px solid #1e2433;border-radius:10px;padding:14px 18px;min-width:140px;">
+      <div style="font-size:11px;color:#888;margin-bottom:4px;">總充值金額 (¥)</div>
+      <div style="font-size:22px;font-weight:900;color:#4ade80;">
+        ¥{{ "%.0f"|format(history|sum(attribute='amount_yuan')|float) }}
+      </div>
+    </div>
+    <div style="background:#141820;border:1px solid #1e2433;border-radius:10px;padding:14px 18px;min-width:140px;">
+      <div style="font-size:11px;color:#888;margin-bottom:4px;">DeepSeek 需補充 ($)</div>
+      <div style="font-size:22px;font-weight:900;color:#f59e0b;">
+        ${{ "%.2f"|format(history|sum(attribute='amount_usd')|float) }}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  <div style="text-align:center;padding:40px;color:#444;background:#0f1520;border-radius:12px;border:1px dashed #1e2433;">
+    <div style="font-size:32px;margin-bottom:8px;">💳</div>
+    <div style="font-size:14px;">暫無充值記錄</div>
+    <div style="font-size:12px;color:#333;margin-top:4px;">用戶充值後會出現在這裡</div>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

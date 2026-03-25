@@ -1,0 +1,202 @@
+{% extends "system_base.html" %}
+
+{% block title %}{{ 'Confirm Payment — ORCLAW' if lang == 'en' else '确认支付 — 大闸蟹' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .pay-btn-wechat { background: #07C160; color: #fff; font-weight: 700; padding: 16px; border-radius: 8px; width: 100%; cursor: pointer; transition: all 0.2s; border: none; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .pay-btn-wechat:hover { opacity: 0.9; }
+  .pay-btn-crypto { background: var(--accent); color: #fff; font-weight: 700; padding: 16px; border-radius: 8px; width: 100%; cursor: pointer; transition: all 0.2s; border: none; font-size: 18px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+  .pay-btn-crypto:hover { opacity: 0.9; }
+  .pay-btn-wechat:disabled, .pay-btn-crypto:disabled { opacity: 0.5; cursor: not-allowed; }
+  .spinner { width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .pay-method { border: 2px solid #1e2433; border-radius: 10px; padding: 16px; transition: border-color 0.2s; }
+  .pay-method.active-wechat { border-color: #07C160; }
+  .pay-method.active-crypto { border-color: var(--accent); }
+  .pay-method-disabled { opacity: 0.3; pointer-events: none; }
+  .crypto-addr { font-family: monospace; font-size: 12px; background: var(--elevated); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; word-break: break-all; color: var(--text-2); cursor: pointer; transition: border-color 0.15s; }
+  .crypto-addr:hover { border-color: var(--accent); }
+  .copy-hint { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center p-6">
+  <div class="w-full max-w-md">
+
+    {% if is_vpn and not is_china %}
+    {# 偵測到 VPN 且顯示境外支付：提示用戶若在中國需關閉 VPN #}
+    <div class="s-flash s-flash-warning mb-4" id="vpnWarning">
+      <div class="flex items-start gap-3">
+        <span class="text-xl">🔒</span>
+        <div>
+          <p class="font-semibold text-sm">
+            {{ 'VPN / Proxy detected' if lang == 'en' else '检测到 VPN 或代理' }}
+          </p>
+          <p class="text-xs mt-1 text-[#aaa]">
+            {% if lang == 'en' %}
+            If you're in mainland China, please <strong>turn off your VPN</strong> and
+            <a href="" class="underline text-[#f59e0b]">refresh</a> to use WeChat Pay.
+            {% else %}
+            如果您在中国大陆，请<strong>关闭 VPN 或代理</strong>后
+            <a href="" class="underline text-[#f59e0b]">刷新页面</a>，即可使用微信支付。
+            {% endif %}
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="mb-8">
+      <a href="javascript:history.back()" class="s-back mb-4 inline-block">← {{ 'Back' if lang == 'en' else '返回' }}</a>
+      <h1 class="text-2xl font-black mb-2">{{ 'Confirm Payment' if lang == 'en' else '确认支付' }}</h1>
+      <p class="text-[#666] text-sm">{{ 'Order: ' if lang == 'en' else '订单号：' }}{{ token[:12] }}...</p>
+    </div>
+
+    <!-- Order summary -->
+    <div class="s-card p-6 mb-6">
+      <div class="flex justify-between items-center mb-4">
+        <span class="text-[#888]">{{ 'Plan' if lang == 'en' else '方案' }}</span>
+        <span class="font-bold">{{ plan_info.name }}</span>
+      </div>
+      <div class="flex justify-between items-center mb-4">
+        <span class="text-[#888]">{{ 'Billing' if lang == 'en' else '周期' }}</span>
+        <span>{% if lang == 'en' %}{{ duration_months }} Month{{ 's' if duration_months != 1 else '' }}{% else %}{{ duration_months }} 個月{% endif %}</span>
+      </div>
+      {% if ai_credit %}
+      <div class="flex justify-between items-center mb-4">
+        <span class="text-[#888]">AI {{ 'Credits' if lang == 'en' else '充值' }}</span>
+        <span>¥{{ ai_credit }}</span>
+      </div>
+      {% endif %}
+      <div class="border-t border-[#1e2433] pt-4 flex justify-between items-center">
+        <span class="text-[#888]">{{ 'Total' if lang == 'en' else '应付金额' }}</span>
+        <span class="text-3xl font-black text-[#E85542]">¥{{ total_price + ai_credit }}</span>
+      </div>
+    </div>
+
+    <!-- Payment method -->
+    <div class="mb-6">
+      <p class="text-sm text-[#888] mb-3">{{ 'Payment Method' if lang == 'en' else '支付方式' }}</p>
+
+      {% if is_china %}
+      <!-- China: WeChat Pay -->
+      <div class="space-y-3">
+        <div class="pay-method active-wechat flex items-center gap-3">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#07C160"/><text x="14" y="19" text-anchor="middle" fill="white" font-size="14" font-weight="bold">微</text></svg>
+          <span class="font-medium">微信支付</span>
+          <span class="ml-auto text-[#07C160]">✓</span>
+        </div>
+        <div class="pay-method pay-method-disabled flex items-center gap-3">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#1677FF"/><text x="14" y="19" text-anchor="middle" fill="white" font-size="14" font-weight="bold">支</text></svg>
+          <span class="font-medium text-[#666]">支付宝（即将上线）</span>
+        </div>
+      </div>
+
+      <!-- WeChat pay button -->
+      <form id="payForm" action="/purchase/confirm/{{ token }}" method="POST" class="mt-6">
+        <button type="button" id="payBtn" class="pay-btn-wechat" onclick="handlePay()">
+          <span id="payText">确认支付 ¥{{ total_price + ai_credit }}</span>
+          <div id="paySpinner" class="spinner"></div>
+        </button>
+      </form>
+      <p class="text-center text-[#333] text-xs mt-4">支付安全由微信支付保障 · 到期不续费自动停止</p>
+
+      {% else %}
+      <!-- Non-China: Crypto payment -->
+      <div class="space-y-3">
+        <div class="pay-method active-crypto flex items-center gap-3">
+          <div style="width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#fff;font-size:13px;flex-shrink:0;">₮</div>
+          <span class="font-medium">{{ 'USDT (TRC-20)' if lang == 'en' else 'USDT 加密支付 (TRC-20)' }}</span>
+          <span class="ml-auto text-[var(--accent)]">✓</span>
+        </div>
+        <div class="pay-method pay-method-disabled flex items-center gap-3">
+          <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#07C160"/><text x="14" y="19" text-anchor="middle" fill="white" font-size="14" font-weight="bold">微</text></svg>
+          <span class="font-medium text-[#666]">{{ 'WeChat Pay (CN only)' if lang == 'en' else '微信支付（仅限中国大陆）' }}</span>
+        </div>
+      </div>
+
+      <!-- Crypto payment instructions -->
+      <div class="s-card p-5 mt-5">
+        <p class="text-sm font-semibold mb-3">{{ 'Transfer Instructions' if lang == 'en' else '转账说明' }}</p>
+        <div class="space-y-3 text-sm">
+          <div>
+            <p class="text-[#888] mb-1">{{ 'Amount (USDT)' if lang == 'en' else '转账金额 (USDT)' }}</p>
+            <p class="font-bold text-xl text-[#f59e0b]" id="usdtAmount">{{ "%.2f"|format((plan_info.price + ai_credit) * usdt_rate) }} USDT</p>
+            <p class="text-[#555] text-xs mt-1">≈ ¥{{ plan_info.price + ai_credit }} ({{ '1 USDT ≈ ¥%.2f'|format(1/usdt_rate) if lang == 'en' else '汇率 1 USDT ≈ ¥%.2f'|format(1/usdt_rate) }})</p>
+          </div>
+          <div>
+            <p class="text-[#888] mb-1">{{ 'Receiving Address (TRC-20)' if lang == 'en' else '收款地址 (TRC-20)' }}</p>
+            {% if usdt_wallet %}
+            <div class="crypto-addr" id="cryptoAddr" onclick="copyAddr()" title="{{ 'Click to copy' if lang == 'en' else '点击复制' }}">
+              {{ usdt_wallet }}
+            </div>
+            {% else %}
+            <div class="s-flash s-flash-warning text-xs">
+              {{ '⚠️ Payment address not configured. Please contact support.' if lang == 'en' else '⚠️ 收款地址未配置，请联系客服获取转账地址。' }}
+            </div>
+            {% endif %}
+            <p class="copy-hint" id="copyHint">{{ '👆 Click to copy address' if lang == 'en' else '👆 点击复制地址' }}</p>
+          </div>
+          <div class="s-flash s-flash-warning text-xs">
+            {{ '⚠️ Send exact amount to correct address. Contact support after transfer with your transaction hash.' if lang == 'en' else '⚠️ 请转账正确金额至上方地址，转账完成后联系客服并提供交易哈希（TxHash）确认到账。' }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirm after transfer button -->
+      <form id="payForm" action="/purchase/confirm/{{ token }}" method="POST" class="mt-5">
+        <button type="button" id="payBtn" class="pay-btn-crypto" onclick="handlePay()">
+          <span id="payText">{{ "I've Sent the Payment" if lang == 'en' else '我已完成转账' }}</span>
+          <div id="paySpinner" class="spinner"></div>
+        </button>
+      </form>
+      <p class="text-center text-[#333] text-xs mt-4">{{ 'Order activates after payment confirmed by support (usually within 2h)' if lang == 'en' else '客服确认到账后激活订单（通常 2 小时内）' }}</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  var LANG = '{{ lang }}';
+  var IS_CHINA = {{ 'true' if is_china else 'false' }};
+
+  function copyAddr() {
+    var addr = document.getElementById('cryptoAddr');
+    if (!addr) return;
+    var text = addr.textContent.trim();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function() {
+        var hint = document.getElementById('copyHint');
+        if (hint) hint.textContent = LANG === 'en' ? '✅ Copied!' : '✅ 已复制！';
+        setTimeout(function() {
+          if (hint) hint.textContent = LANG === 'en' ? '👆 Click to copy address' : '👆 点击复制地址';
+        }, 2000);
+      });
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    }
+  }
+
+  var paying = false;
+  function handlePay() {
+    if (paying) return;
+    paying = true;
+    var btn = document.getElementById('payBtn');
+    var text = document.getElementById('payText');
+    var spinner = document.getElementById('paySpinner');
+    btn.disabled = true;
+    text.textContent = LANG === 'en' ? 'Processing...' : IS_CHINA ? '支付处理中...' : '提交中...';
+    spinner.style.display = 'block';
+    setTimeout(function() { document.getElementById('payForm').submit(); }, IS_CHINA ? 2000 : 800);
+  }
+</script>
+{% endblock %}

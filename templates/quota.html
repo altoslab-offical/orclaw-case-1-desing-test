@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% block title %}大閘蟹雲配額 — 管理後台{% endblock %}
+{% block page_title %}大閘蟹雲配額管理{% endblock %}
+
+{% block content %}
+
+{% set dz_total   = dazhaxie_vps|length %}
+{% set dz_running = dazhaxie_vps|selectattr('status','equalto','on')|list|length %}
+{% set dz_max     = 48 %}
+{% set dz_ratio   = (dz_running / dz_max) if dz_max > 0 else 0 %}
+
+<!-- ── 頁面標題列 ── -->
+<div class="flex-between mb-16">
+  <div>
+    <h2 style="font-size:20px; color:#0f172a">大閘蟹雲配額狀況</h2>
+    <div class="text-muted" style="margin-top:4px;">數據更新時間：{{ checked_at }}</div>
+  </div>
+  <div class="btn-group">
+    <a href="{{ url_for('quota_page') }}" class="btn btn-default">重新查詢</a>
+    <a href="{{ url_for('index') }}" class="btn btn-default">返回列表</a>
+    {% if dazhaxie_vps %}
+    <button class="btn" style="background:#ef4444; color:#fff; border:none; cursor:pointer;"
+            onclick="dazhaxieTerminateAll()">⚠️ 清除全部 VPS</button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ── 容量統計卡片 ── -->
+{% if dazhaxie_error %}
+<div class="card" style="border:2px solid #fecaca; background:#fef2f2; margin-bottom:20px;">
+  <div style="font-size:15px; font-weight:600; color:#b91c1c; margin-bottom:8px;">⚠️ 無法連接大閘蟹面板</div>
+  <code style="display:block; font-size:12px; color:#7f1d1d; background:#fee2e2; padding:8px 12px; border-radius:6px; white-space:pre-wrap; word-break:break-all; line-height:1.7;">{{ dazhaxie_error }}</code>
+  <div style="margin-top:8px; font-size:12px; color:#94a3b8;">
+    面板地址：http://43.99.20.33/dazhaxie &nbsp;|&nbsp; 如持續出現請檢查面板服務狀態
+  </div>
+</div>
+{% else %}
+<div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+  <div class="stat-card {{ 'active-stat' if dz_running > 0 else '' }}">
+    <div class="num" style="font-size:36px; color:{{ '#22c55e' if dz_running > 0 else '#94a3b8' }};">{{ dz_running }}</div>
+    <div class="label">運行中 VPS</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="font-size:36px; color:#94a3b8;">{{ dz_total }}</div>
+    <div class="label">面板已建立</div>
+  </div>
+  <div class="stat-card">
+    <div class="num" style="font-size:36px; color:#94a3b8;">{{ dz_max }}</div>
+    <div class="label">IP 池上限</div>
+  </div>
+  <div class="stat-card {{ 'active-stat' if (dz_max - dz_running) > 10 else 'expiring-stat' }}">
+    <div class="num" style="font-size:36px; color:#6366f1;">{{ dz_max - dz_running }}</div>
+    <div class="label">剩餘可開</div>
+  </div>
+</div>
+
+<!-- 使用率進度條 -->
+<div class="card" style="padding:16px 24px; margin-top:0;">
+  <div class="flex-between" style="margin-bottom:8px;">
+    <span style="font-weight:600; font-size:13px; color:#0f172a;">IP 使用率</span>
+    <span style="font-size:13px; color:#94a3b8;">{{ dz_running }} / {{ dz_max }} 個</span>
+  </div>
+  <div style="height:12px; background:#f1f5f9; border-radius:6px; overflow:hidden;">
+    <div style="height:100%; width:{{ [dz_ratio*100, 100]|min }}%; border-radius:6px; transition:width .3s;
+                background:{{ '#22c55e' if dz_ratio < 0.6 else ('#f59e0b' if dz_ratio < 0.8 else '#ef4444') }};"></div>
+  </div>
+  <div style="margin-top:8px; font-size:13px; color:{{ '#ef4444' if dz_ratio >= 0.8 else ('#f59e0b' if dz_ratio >= 0.6 else '#22c55e') }};">
+    {% if dz_ratio >= 0.8 %}
+    IP 池已用 {{ "%.0f"|format(dz_ratio*100) }}%，建議聯繫面板商擴容
+    {% elif dz_ratio >= 0.6 %}
+    還可再開 {{ dz_max - dz_running }} 台 VPS
+    {% else %}
+    容量充足，還可開 {{ dz_max - dz_running }} 台 VPS
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ── 訂單套餐分布 + 容量規劃 ── -->
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:20px;">
+
+  <!-- 訂單分布 -->
+  <div class="card">
+    <div class="card-title">訂單套餐分布（資料庫）</div>
+    {% if plan_stats %}
+    <table style="font-size:13px; width:100%;">
+      <thead>
+        <tr>
+          <th>套餐</th>
+          <th>運行中</th>
+          <th>全部</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in plan_stats %}
+        <tr>
+          <td><strong>{{ row.plan }}</strong></td>
+          <td style="color:#22c55e; font-weight:600;">{{ row.active_count }}</td>
+          <td>{{ row.total_count }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr style="background:#f8fafc; font-weight:600;">
+          <td>合計</td>
+          <td style="color:#22c55e;">{{ plan_stats|sum(attribute='active_count') }}</td>
+          <td>{{ plan_stats|sum(attribute='total_count') }}</td>
+        </tr>
+      </tfoot>
+    </table>
+    {% else %}
+    <div class="text-muted" style="text-align:center; padding:20px;">暫無訂單數據</div>
+    {% endif %}
+  </div>
+
+  <!-- 容量規劃 -->
+  <div class="card">
+    <div class="card-title">容量規劃（大閘蟹雲）</div>
+    <div style="font-size:13px; color:#64748b; line-height:2.4;">
+      {% set remaining = dz_max - dz_running %}
+      <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #f1f5f9;">
+        <span>還可開 Starter（1C/2GB）</span>
+        <strong style="color:#6366f1;">{{ remaining }} 台</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #f1f5f9;">
+        <span>還可開 Standard（2C/4GB）</span>
+        <strong style="color:#6366f1;">{{ remaining }} 台</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid #f1f5f9;">
+        <span>還可開 Pro（2C/8GB）</span>
+        <strong style="color:#6366f1;">{{ remaining }} 台</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; padding:4px 0;">
+        <span>還可開 Business（4C/16GB）</span>
+        <strong style="color:#6366f1;">{{ remaining }} 台</strong>
+      </div>
+    </div>
+    <div style="margin-top:14px; padding:10px 12px; background:#f0fdf4; border-radius:8px; font-size:12px; color:#64748b; line-height:1.8;">
+      <strong style="color:#15803d;">🦀 大閘蟹雲</strong>：無 vCPU 配額限制，上限取決於 IP 池（{{ dz_max }} 個）<br>
+      目前已使用 <strong>{{ dz_running }}</strong> 個，剩餘 <strong style="color:#6366f1;">{{ remaining }}</strong> 個可開立
+    </div>
+  </div>
+
+</div>
+
+<!-- ── VPS 管理列表 ── -->
+<div class="card" style="margin-top:20px;">
+  <div class="flex-between" style="margin-bottom:16px;">
+    <div>
+      <div class="card-title" style="margin-bottom:0;">🦀 VPS 管理</div>
+      {% if dazhaxie_vps %}
+      <div class="text-muted" style="margin-top:4px; font-size:12px;">
+        共 {{ dz_total }} 台，運行中 {{ dz_running }} 台
+      </div>
+      {% endif %}
+    </div>
+    {% if dazhaxie_vps %}
+    <button class="btn" style="background:#ef4444; color:#fff; border:none; cursor:pointer; font-size:13px;"
+            onclick="dazhaxieTerminateAll()">⚠️ 清除全部 VPS</button>
+    {% endif %}
+  </div>
+
+  {% if dazhaxie_error %}
+  <div style="padding:12px 16px; background:#fef2f2; border-radius:8px; font-size:13px;">
+    <div style="color:#b91c1c; font-weight:600; margin-bottom:6px;">❌ 無法取得 VPS 列表</div>
+    <code style="font-size:11px; color:#7f1d1d; white-space:pre-wrap; word-break:break-all;">{{ dazhaxie_error }}</code>
+  </div>
+  {% elif not dazhaxie_vps %}
+  <div class="text-muted" style="text-align:center; padding:24px; font-size:13px;">
+    面板上目前沒有任何 VPS
+  </div>
+  {% else %}
+  <div class="table-wrap">
+    <table style="font-size:13px;">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Hostname</th>
+          <th>IP</th>
+          <th>規格</th>
+          <th>狀態</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in dazhaxie_vps %}
+        <tr id="dzrow-{{ v.id }}">
+          <td class="mono" style="color:#94a3b8; font-size:11px;">{{ v.id }}</td>
+          <td class="mono" style="font-size:12px;">{{ v.hostname }}</td>
+          <td class="mono" style="font-weight:600;">{{ v.ip }}</td>
+          <td style="color:#64748b; font-size:12px;">{{ v.cpu }}C / {{ v.memory }}MB</td>
+          <td>
+            {% if v.status == 'on' %}
+              <span class="badge badge-active">運行中</span>
+            {% elif v.status == 'off' %}
+              <span class="badge badge-default">已停機</span>
+            {% else %}
+              <span class="badge" style="background:#fef3c7; color:#92400e;">{{ v.status }}</span>
+            {% endif %}
+          </td>
+          <td>
+            <button class="btn btn-default"
+                    style="font-size:12px; padding:3px 10px; color:#ef4444; border-color:#ef4444;"
+                    onclick="dazhaxieDelete('{{ v.id }}', this)">刪除</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+async function dazhaxieDelete(instanceId, btn) {
+  if (!confirm(`確定要刪除 VPS ${instanceId}？\n\n此操作不可逆！`)) return;
+  btn.disabled = true;
+  btn.textContent = '刪除中...';
+  try {
+    var resp = await fetch(`/admin/dazhaxie/delete/${instanceId}`, { method: 'POST' });
+    var data = await resp.json();
+    if (data.success) {
+      var row = document.getElementById(`dzrow-${instanceId}`);
+      if (row) row.style.opacity = '0.4';
+      btn.textContent = '✅ 已刪除';
+      btn.style.color = '#22c55e';
+      btn.style.borderColor = '#22c55e';
+    } else {
+      alert('❌ 失敗：' + (data.error || '未知錯誤'));
+      btn.disabled = false;
+      btn.textContent = '刪除';
+    }
+  } catch (e) {
+    alert('❌ 網路錯誤：' + e.message);
+    btn.disabled = false;
+    btn.textContent = '刪除';
+  }
+}
+
+async function dazhaxieTerminateAll() {
+  if (!confirm('確定要刪除所有 VPS 嗎？\n\n1. 刪除大閘蟹面板上所有 VPS\n2. 對應訂單標記為 terminated\n\n此操作不可逆！')) return;
+  if (!confirm('再次確認：真的要清除全部 VPS？')) return;
+  try {
+    var resp = await fetch('/admin/dazhaxie/terminate-all', { method: 'POST' });
+    var data = await resp.json();
+    if (data.success) {
+      alert('✅ ' + data.message);
+      window.location.reload();
+    } else {
+      alert('❌ 失敗：' + (data.error || '未知錯誤'));
+    }
+  } catch (e) {
+    alert('❌ 網路錯誤：' + e.message);
+  }
+}
+</script>
+{% endblock %}

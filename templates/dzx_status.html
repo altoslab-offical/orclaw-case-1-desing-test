@@ -1,0 +1,702 @@
+{% extends "system_base.html" %}
+
+{% block title %}{% if lang == 'en' %}Deploying — ORCLAW{% else %}部署中 — 大闸蟹{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── 標題下方進度條 ── */
+  .top-progress {
+    width: 100%;
+    height: 4px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 2px;
+    margin: 16px 0 0;
+    overflow: hidden;
+  }
+  .top-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ef4444, #FF6B35);
+    transition: width 0.6s ease;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    border-radius: 2px;
+  }
+
+  /* ── 螃蟹動畫 ── */
+  .crab-loading { font-size: 52px; animation: crabWalk 2s ease-in-out infinite; display: inline-block; }
+  @keyframes crabWalk {
+    0%, 100% { transform: translateX(0) scaleX(1); }
+    25%  { transform: translateX(16px) scaleX(1); }
+    50%  { transform: translateX(0) scaleX(-1); }
+    75%  { transform: translateX(-16px) scaleX(-1); }
+  }
+
+  /* ── Skill 卡牌輪播容器 ── */
+  .skill-carousel {
+    position: relative;
+    width: 100%;
+    height: 164px;
+    overflow: hidden;
+    margin: 20px 0 16px;
+  }
+
+  /* ── 單張 skill 卡 ── */
+  .skill-card {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 16px;
+    padding: 24px 20px;
+    text-align: center;
+    opacity: 0;
+    transform: translateX(60px) scale(0.97);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+    pointer-events: none;
+  }
+  .skill-card.active {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+    pointer-events: auto;
+  }
+  .skill-card.exit {
+    opacity: 0;
+    transform: translateX(-60px) scale(0.97);
+  }
+
+  .skill-card-icon { font-size: 36px; line-height: 1; }
+  .skill-card-name {
+    font-size: 16px; font-weight: 700;
+    color: #fafafa;
+    letter-spacing: 0.01em;
+  }
+  .skill-card-desc {
+    font-size: 13px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.5;
+    max-width: 260px;
+  }
+
+  /* ── 輪播小點 ── */
+  .carousel-dots {
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px; margin-bottom: 20px;
+  }
+  .carousel-dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    transition: all 0.3s ease;
+  }
+  .carousel-dot.active {
+    width: 18px; border-radius: 3px;
+    background: #ef4444;
+  }
+
+  /* ── 部署步驟（緊湊版） ── */
+  .steps-mini {
+    display: flex; flex-direction: column; gap: 0;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+  }
+  .step-mini {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 0;
+  }
+  .step-mini + .step-mini {
+    border-top: 1px solid rgba(255,255,255,0.05);
+  }
+  .step-dot-mini {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.12); flex-shrink: 0;
+  }
+  .step-dot-mini.done { background: #22c55e; }
+  .step-dot-mini.active {
+    background: transparent;
+    width: 10px; height: 10px;
+    border: 2px solid rgba(239, 68, 68, 0.25);
+    border-top-color: #ef4444;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .step-mini-text { font-size: 12.5px; color: rgba(255,255,255,0.35); }
+  .step-mini-text.done { color: #22c55e; }
+  .step-mini-text.active { color: #fafafa; font-weight: 600; }
+  .step-mini-text.active::after {
+    content: '';
+    animation: ellipsis 1.5s steps(4, end) infinite;
+  }
+  @keyframes ellipsis {
+    0%   { content: ''; }
+    25%  { content: '.'; }
+    50%  { content: '..'; }
+    75%  { content: '...'; }
+  }
+
+  /* ── 成功按鈕 ── */
+  .btn-success {
+    background: #22c55e; color: #fff; font-weight: 700; padding: 16px;
+    border-radius: 12px; width: 100%; cursor: pointer; border: none;
+    font-size: 16px; display: none; font-family: inherit; margin-bottom: 12px;
+  }
+  .btn-success:hover { opacity: 0.9; }
+
+  /* ── 失敗 Modal ── */
+  .support-modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.55);
+    align-items: flex-end; justify-content: center;
+  }
+  .support-modal-overlay.show { display: flex; }
+  .support-modal {
+    background: #FFF8F0; border: 1.5px solid #FFCF86;
+    border-radius: 20px 20px 0 0; padding: 24px 20px 32px;
+    text-align: left; width: 100%; max-width: 480px;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(60px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+  .support-card-title {
+    font-size: 16px; font-weight: 800; color: #1a1a1a; margin-bottom: 6px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .support-card-desc { font-size: 13px; color: #666; margin-bottom: 16px; line-height: 1.6; text-align: center; }
+  .order-box {
+    background: #fff; border: 1px solid #eee; border-radius: 10px;
+    padding: 12px 14px; display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 16px; gap: 8px;
+  }
+  .order-id-text { font-family: monospace; font-size: 13px; color: #333; word-break: break-all; flex: 1; }
+  .copy-btn {
+    background: none; border: 1px solid #ddd; border-radius: 6px;
+    padding: 5px 10px; font-size: 11px; cursor: pointer; color: #888;
+    white-space: nowrap; flex-shrink: 0; font-family: inherit; transition: all 0.2s;
+  }
+  .copy-btn:hover { background: #f5f5f5; }
+  .copy-btn.copied { border-color: #22c55e; color: #22c55e; }
+  .btn-contact {
+    width: 100%; padding: 13px; border: none; border-radius: 12px;
+    font-weight: 700; font-size: 14px; cursor: pointer; font-family: inherit;
+    background: #FF6600; color: #fff; margin-bottom: 8px;
+  }
+  .btn-contact:hover { opacity: 0.9; }
+  .btn-contact.pending {
+    background: #f5f5f5; color: #aaa; border: 1px dashed #ddd; cursor: default;
+  }
+  .btn-retry-small {
+    width: 100%; padding: 11px; border: 1px solid #ddd; border-radius: 12px;
+    background: none; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit;
+    color: #666; margin-bottom: 8px;
+  }
+  .btn-retry-small:hover { background: #f5f5f5; }
+  .btn-home {
+    width: 100%; padding: 11px; border: 1px solid #ddd; border-radius: 12px;
+    background: none; font-weight: 600; font-size: 13px; cursor: pointer; font-family: inherit; color: #aaa;
+  }
+  .btn-home:hover { background: #f5f5f5; }
+
+  /* 逾時橫幅 */
+  .timeout-banner {
+    display: none; background: #FFFBE6; border: 1px solid #FFE58F;
+    border-radius: 10px; padding: 12px 14px; font-size: 13px; color: #7B5900;
+    margin-bottom: 12px; text-align: left; line-height: 1.5;
+  }
+  .timeout-banner.show { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center p-6 min-h-screen">
+  <div class="w-full max-w-md text-center">
+
+    <!-- 螃蟹 + 標題 -->
+    <div class="mb-3">
+      <span class="crab-loading" id="crabEmoji">🦀</span>
+    </div>
+    <h1 id="mainTitle" class="text-xl font-black mb-1">正在部署你的大闸蟹</h1>
+    <p id="mainDesc" class="text-sm" style="color:rgba(255,255,255,0.4);margin-bottom:0">通常需要 6-8 分钟，请耐心等待</p>
+
+    <!-- 進度條（副標題下方） -->
+    <div class="top-progress">
+      <div id="progressFill" class="top-progress-fill" style="width: 10%"></div>
+    </div>
+
+    <!-- ── Skill 卡牌輪播 ── -->
+    <div class="skill-carousel" id="skillCarousel">
+      <!-- 卡片由 JS 動態插入 -->
+    </div>
+
+    <!-- 輪播小點指示器 -->
+    <div class="carousel-dots" id="carouselDots"></div>
+
+    <!-- 逾時警告橫幅 -->
+    <div class="timeout-banner" id="timeoutBanner">
+      ⏱ <strong id="timeoutBannerTitle">部署时间比预期长</strong><br>
+      <span id="timeoutBannerDesc">服务器仍在初始化，再等一会儿。如等待超过 15 分钟，请联系客服处理。</span>
+    </div>
+
+    <!-- 成功按鈕 -->
+    <button id="btnSuccess" class="btn-success" onclick="window.location.href='/purchase/qr/{{ token }}'">
+      🎉 部署完成！点击查看二维码 →
+    </button>
+
+    <!-- 部署步驟（緊湊版） -->
+    <div class="steps-mini" id="stepsCard">
+      <div class="step-mini" id="step1">
+        <div class="step-dot-mini done"></div>
+        <span class="step-mini-text done">支付确认</span>
+      </div>
+      <div class="step-mini" id="step2">
+        <div class="step-dot-mini active"></div>
+        <span class="step-mini-text active">正在启动云端服务器</span>
+      </div>
+      <div class="step-mini" id="step3">
+        <div class="step-dot-mini"></div>
+        <span class="step-mini-text">安装 AI 大脑和技能</span>
+      </div>
+      <div class="step-mini" id="step4">
+        <div class="step-dot-mini"></div>
+        <span class="step-mini-text">生成绑定二维码</span>
+      </div>
+    </div>
+
+    <!-- 訂單號 -->
+    <p class="text-xs mt-2" style="color:rgba(255,255,255,0.2);" id="footerOrderId">
+      <span id="footerOrderLabel">订单号：</span>{{ order_id or (token[:16] + '...') }}
+    </p>
+  </div>
+</div>
+
+<!-- ── 失敗 Modal ── -->
+<div class="support-modal-overlay" id="supportModalOverlay">
+  <div class="support-modal">
+    <div class="support-card-title">
+      <span id="supportCardIcon">😟</span>
+      <span id="supportCardTitle">部署未完成</span>
+    </div>
+    <p class="support-card-desc" id="supportCardDesc">
+      别担心，<strong>你的付款是安全的</strong>。遇到这种情况，联系客服后通常可以快速解决。
+    </p>
+    <p id="failReason" style="display:none; font-size:12px; color:#E07700; background:#FFF3DC; padding:8px 10px; border-radius:6px; margin-bottom:12px;"></p>
+    <p style="font-size:12px; color:#999; margin-bottom:6px;" id="orderLabel">请将以下订单号提供给客服：</p>
+    <div class="order-box">
+      <span class="order-id-text" id="displayOrderId">{{ order_id or token }}</span>
+      <button class="copy-btn" id="copyBtn" onclick="copyOrderId()">📋 复制</button>
+    </div>
+    {% if support_url %}
+    <a href="{{ support_url }}" target="_blank" rel="noopener" id="btnContact" class="btn-contact" style="display:block; text-align:center; text-decoration:none;">
+      💬 <span id="contactBtnText">联系客服</span>
+    </a>
+    {% else %}
+    <div class="btn-contact pending" id="btnContactPending">
+      💬 <span id="contactBtnText">客服渠道配置中，请稍后</span>
+    </div>
+    {% endif %}
+    <button class="btn-retry-small" id="btnRetry" onclick="retryDeploy()" style="display:none;">
+      🔄 <span id="retryBtnText">尝试重新部署</span>
+    </button>
+    <button class="btn-home" id="btnHome" onclick="window.location.href='/'">
+      🏠 <span id="homeBtnText">返回首页</span>
+    </button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  var LANG = {{ lang | tojson }};
+  var TOKEN = {{ token | tojson }};
+  var ORDER_ID = {{ (order_id or token) | tojson }};
+  var SUPPORT_URL = {{ support_url | tojson }};
+
+  var L = {
+    zh: {
+      deploying: '正在部署你的大闸蟹', wait: '通常需要 6-8 分钟，请耐心等待',
+      step1: '支付确认', step2_active: '正在启动云端服务器', step2_installing: '正在安装 AI 大脑',
+      step2_done: '服务器已启动', step3_active: '正在安装技能', step3: '安装 AI 大脑和技能',
+      step3_done: 'AI 大脑和技能已安装', step4: '生成绑定二维码', step4_active: '正在生成二维码',
+      step4_done: '绑定二维码已生成',
+      done_title: '🎉 你的大闸蟹准备好了！', done_desc: '扫描二维码，开始聊天',
+      fail_title: '部署未完成', fail_desc: '别担心，你的付款是安全的，联系客服即可解决',
+      fail_reason_prefix: '原因：', retry_title: '正在重新部署你的大闸蟹',
+      retry_fail: '重试失败', net_err: '网络连接异常', net_refresh: '请刷新页面重试', net_err2: '网络错误',
+      support_card_title: '部署未完成', support_card_icon: '😟',
+      support_card_desc: '别担心，<strong>你的付款是安全的</strong>。遇到这种情况，联系客服后通常可以快速解决。',
+      order_label: '请将以下订单号提供给客服：',
+      contact_btn: '💬 联系客服', contact_pending: '💬 客服渠道配置中，请稍后',
+      retry_btn: '🔄 尝试重新部署', copy_btn: '📋 复制', copy_done: '✅ 已复制',
+      timeout_title: '部署时间比预期长',
+      timeout_desc: '服务器仍在初始化，再等一会儿。如等待超过 15 分钟，请联系客服处理。',
+      timeout_critical: '部署超时',
+      timeout_critical_desc: '服务器初始化花了超过 15 分钟，可能遇到异常。建议联系客服告知订单号。',
+      net_support_title: '无法连接到服务器',
+      net_support_desc: '网络连接中断。如你的付款已完成，<strong>订单依然有效</strong>——恢复网络后刷新页面，或联系客服处理。',
+      footer_order_label: '订单号：', home_btn: '🏠 返回首页'
+    },
+    en: {
+      deploying: 'Deploying your ORCLAW', wait: 'Usually takes 6-8 minutes, please wait',
+      step1: 'Payment confirmed', step2_active: 'Starting cloud server',
+      step2_installing: 'Installing AI brain', step2_done: 'Server started',
+      step3_active: 'Installing skills', step3: 'Install AI brain & skills',
+      step3_done: 'AI brain & skills installed', step4: 'Generate binding QR code',
+      step4_active: 'Generating QR code', step4_done: 'QR code generated',
+      done_title: '🎉 Your ORCLAW is ready!', done_desc: 'Scan the QR code to start chatting',
+      fail_title: 'Deployment incomplete', fail_desc: 'Your payment is safe — contact support to resolve',
+      fail_reason_prefix: 'Reason: ', retry_title: 'Re-deploying your ORCLAW',
+      retry_fail: 'Retry failed', net_err: 'Network connection error',
+      net_refresh: 'Please refresh the page', net_err2: 'Network error',
+      support_card_title: 'Deployment incomplete', support_card_icon: '😟',
+      support_card_desc: 'Don\'t worry — <strong>your payment is safe</strong>. Contact support and we\'ll resolve this quickly.',
+      order_label: 'Please provide this order ID to support:',
+      contact_btn: '💬 Contact Support', contact_pending: '💬 Support channel coming soon',
+      retry_btn: '🔄 Retry deployment', copy_btn: '📋 Copy', copy_done: '✅ Copied',
+      timeout_title: 'Deployment is taking longer than usual',
+      timeout_desc: 'The server is still initializing. If it takes more than 15 minutes, please contact support.',
+      timeout_critical: 'Deployment timeout',
+      timeout_critical_desc: 'Server initialization has taken over 15 minutes. Contact support with your order ID.',
+      net_support_title: 'Unable to reach server',
+      net_support_desc: 'Network connection lost. If your payment was completed, <strong>your order is still valid</strong> — refresh when back online, or contact support.',
+      footer_order_label: 'Order: ', home_btn: '🏠 Back to Homepage'
+    }
+  };
+  var t = L[LANG] || L.zh;
+
+  /* ─── Skill 資料 ─── */
+  var SKILLS_ZH = [
+    { icon: '🔍', name: '网页搜索', desc: '用百度搜索任何内容，获取最新资讯' },
+    { icon: '🌐', name: '网页阅读', desc: '直接读取任意网页全文，总结要点' },
+    { icon: '🌤️', name: '实时天气', desc: '查询全球任意城市的当前天气和预报' },
+    { icon: '🌏', name: '多语言翻译', desc: '中英日韩等语言互译，自动识别源语言' },
+    { icon: '📄', name: '智能摘要', desc: '把长文章、报告快速压缩成关键要点' },
+    { icon: '📰', name: '新闻摘要', desc: '抓取最新新闻，快速了解时事动态' },
+    { icon: '📈', name: '股票行情', desc: '查询 A 股、美股实时行情和基本面数据' },
+    { icon: '💰', name: '加密货币', desc: '实时查询比特币、以太坊等币价走势' },
+    { icon: '🎨', name: '图片生成', desc: '用文字描述生成高质量 AI 图片' },
+    { icon: '🔥', name: '微博热搜', desc: '实时获取微博热搜榜前 50 名话题' },
+    { icon: '📺', name: 'B站搜索', desc: '搜索 Bilibili 视频，找到你想看的内容' },
+    { icon: '💡', name: '知乎热榜', desc: '获取知乎实时热门问题和讨论话题' },
+    { icon: '📱', name: '小红书', desc: '搜索小红书笔记，发现生活方式内容' },
+    { icon: '🎵', name: '抖音热搜', desc: '获取抖音实时热门话题和流行趋势' },
+  ];
+
+  var SKILLS_EN = [
+    { icon: '🔍', name: 'Web Search', desc: 'Search anything with DuckDuckGo, get the latest results' },
+    { icon: '🌐', name: 'Web Reader', desc: 'Read any webpage in full and summarize key points' },
+    { icon: '🌤️', name: 'Live Weather', desc: 'Check current weather and forecasts for any city worldwide' },
+    { icon: '🌏', name: 'Translation', desc: 'Translate between 50+ languages with auto-detection' },
+    { icon: '📄', name: 'Summarizer', desc: 'Condense long articles and reports into key takeaways' },
+    { icon: '📰', name: 'News Summary', desc: 'Fetch the latest news and understand current events fast' },
+    { icon: '📈', name: 'Stock Explorer', desc: 'Real-time stock quotes and fundamentals for any ticker' },
+    { icon: '💰', name: 'Crypto Prices', desc: 'Live prices for Bitcoin, Ethereum, and hundreds of coins' },
+    { icon: '🎨', name: 'Image Generator', desc: 'Generate high-quality AI images from text descriptions' },
+    { icon: '🖥️', name: 'Browser Use', desc: 'Control a real browser to fill forms and navigate the web' },
+  ];
+
+  var SKILLS = (LANG === 'zh') ? SKILLS_ZH : SKILLS_EN;
+
+  /* ─── 建立輪播卡片 ─── */
+  var carousel = document.getElementById('skillCarousel');
+  var dotsEl   = document.getElementById('carouselDots');
+  var cards = [];
+  var dots  = [];
+  var currentIdx = 0;
+  var carouselTimer = null;
+
+  SKILLS.forEach(function(skill, i) {
+    // 卡片
+    var card = document.createElement('div');
+    card.className = 'skill-card' + (i === 0 ? ' active' : '');
+    card.innerHTML =
+      '<div class="skill-card-icon">' + skill.icon + '</div>' +
+      '<div class="skill-card-name">' + skill.name + '</div>' +
+      '<div class="skill-card-desc">' + skill.desc + '</div>';
+    carousel.appendChild(card);
+    cards.push(card);
+
+    // 小點
+    var dot = document.createElement('div');
+    dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+    dotsEl.appendChild(dot);
+    dots.push(dot);
+  });
+
+  function goToSkill(nextIdx) {
+    cards[currentIdx].classList.add('exit');
+    dots[currentIdx].classList.remove('active');
+    setTimeout(function() {
+      cards[currentIdx].classList.remove('active', 'exit');
+      currentIdx = nextIdx;
+      cards[currentIdx].classList.add('active');
+      dots[currentIdx].classList.add('active');
+    }, 420);
+  }
+
+  function nextSkill() {
+    var next = (currentIdx + 1) % SKILLS.length;
+    goToSkill(next);
+  }
+
+  function startCarousel() {
+    carouselTimer = setInterval(nextSkill, 2800);
+  }
+
+  startCarousel();
+
+  /* ─── 初始化文字 ─── */
+  (function() {
+    document.getElementById('mainTitle').textContent = t.deploying;
+    document.getElementById('mainDesc').textContent  = t.wait;
+    setStep(1, 'done',   t.step1);
+    setStep(2, 'active', t.step2_active);
+    setStep(3, '',       t.step3);
+    setStep(4, '',       t.step4);
+    if (LANG === 'en') document.title = 'Deploying — ORCLAW';
+    document.getElementById('orderLabel').textContent = t.order_label;
+    document.getElementById('copyBtn').textContent    = t.copy_btn;
+    document.getElementById('retryBtnText').textContent  = t.retry_btn.replace('🔄 ', '');
+    document.getElementById('timeoutBannerTitle').textContent = t.timeout_title;
+    document.getElementById('timeoutBannerDesc').textContent  = t.timeout_desc;
+    document.getElementById('footerOrderLabel').textContent   = t.footer_order_label;
+    document.getElementById('homeBtnText').textContent = t.home_btn.replace('🏠 ', '');
+    if (document.getElementById('contactBtnText'))
+      document.getElementById('contactBtnText').textContent = SUPPORT_URL ? t.contact_btn.replace('💬 ', '') : t.contact_pending.replace('💬 ', '');
+    if (document.getElementById('supportCardTitle')) {
+      document.getElementById('supportCardTitle').textContent = t.support_card_title;
+      document.getElementById('supportCardIcon').textContent  = t.support_card_icon;
+    }
+    document.getElementById('supportCardDesc').innerHTML = t.support_card_desc;
+  })();
+
+  /* ─── 進度 & 輪詢 ─── */
+  var pollTimer = null;
+  var progressValue = 10;
+  var lastStatus = "";
+  var activeWithoutQrCount = 0;
+  var deployStartTime = new Date();
+  var timeoutWarnShown = false;
+  var timeoutCriticalShown = false;
+
+  function setProgress(val) {
+    progressValue = val;
+    document.getElementById('progressFill').style.width = val + '%';
+  }
+
+  function showSupportCard(opts) {
+    opts = opts || {};
+    document.getElementById('supportModalOverlay').classList.add('show');
+    if (opts.title) document.getElementById('supportCardTitle').textContent = opts.title;
+    if (opts.icon)  document.getElementById('supportCardIcon').textContent  = opts.icon;
+    if (opts.desc)  document.getElementById('supportCardDesc').innerHTML    = opts.desc;
+    if (opts.showRetry) document.getElementById('btnRetry').style.display = 'block';
+    if (opts.failReason) {
+      var el = document.getElementById('failReason');
+      el.textContent = t.fail_reason_prefix + opts.failReason;
+      el.style.display = 'block';
+    }
+  }
+
+  function copyOrderId() {
+    var text = document.getElementById('displayOrderId').textContent;
+    var btn  = document.getElementById('copyBtn');
+    var done = function() {
+      btn.textContent = t.copy_done; btn.classList.add('copied');
+      setTimeout(function() { btn.textContent = t.copy_btn; btn.classList.remove('copied'); }, 2000);
+    };
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(done);
+    } else {
+      var ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+      document.body.removeChild(ta); done();
+    }
+  }
+
+  function updateUI(data) {
+    var status = data.status;
+    var has_qr = data.has_qr;
+
+    if (data.deployed_at) {
+      var apiTime = new Date(data.deployed_at);
+      if (apiTime < deployStartTime) deployStartTime = apiTime;
+    }
+
+    if (status === lastStatus && !has_qr) return;
+    lastStatus = status;
+
+    if (status === "pending") {
+      setProgress(Math.min(progressValue + 2, 20));
+
+    } else if (status === "deploying") {
+      setProgress(Math.min(progressValue + 5, 80));
+      setStep(2, "active", t.step2_installing);
+      if (progressValue > 50) {
+        setStep(2, "done", t.step2_done);
+        setStep(3, "active", t.step3_active);
+      }
+
+    } else if (status === "active") {
+      document.getElementById('timeoutBanner').classList.remove('show');
+      if (has_qr) {
+        setProgress(100);
+        setStep(2, "done", t.step2_done);
+        setStep(3, "done", t.step3_done);
+        setStep(4, "done", t.step4_done);
+        document.getElementById("mainTitle").textContent = t.done_title;
+        document.getElementById("mainDesc").textContent  = t.done_desc;
+        document.getElementById("btnSuccess").style.display = "block";
+        document.getElementById("crabEmoji").style.animation = "none";
+        document.getElementById("supportModalOverlay").classList.remove("show");
+        clearInterval(pollTimer);
+        clearInterval(carouselTimer);
+      } else {
+        activeWithoutQrCount++;
+        setStep(2, "done", t.step2_done);
+        setStep(3, "done", t.step3_done);
+        if (activeWithoutQrCount >= 6) {
+          setProgress(100);
+          setStep(4, "done", t.step4_done);
+          document.getElementById("mainTitle").textContent = t.done_title;
+          document.getElementById("mainDesc").textContent  = t.done_desc;
+          document.getElementById("btnSuccess").style.display = "block";
+          document.getElementById("crabEmoji").style.animation = "none";
+          document.getElementById("supportModalOverlay").classList.remove("show");
+          clearInterval(pollTimer);
+          clearInterval(carouselTimer);
+        } else {
+          setProgress(Math.min(progressValue + 3, 90));
+          setStep(4, "active", t.step4_active);
+        }
+      }
+
+    } else if (status === "failed") {
+      setProgress(100);
+      document.getElementById("mainTitle").textContent = t.fail_title;
+      document.getElementById("mainDesc").textContent  = t.fail_desc;
+      document.getElementById("crabEmoji").style.animation = "none";
+      document.getElementById("progressFill").style.background = "#ef4444";
+      document.getElementById("crabEmoji").textContent = "😟";
+      document.getElementById('stepsCard').style.display = 'none';
+      document.getElementById('timeoutBanner').classList.remove('show');
+      clearInterval(pollTimer);
+      clearInterval(carouselTimer);
+
+      showSupportCard({ showRetry: true, failReason: data.fail_reason || null });
+    }
+  }
+
+  function setStep(num, state, text) {
+    var step = document.getElementById("step" + num);
+    if (!step) return;
+    var dot   = step.querySelector(".step-dot-mini");
+    var label = step.querySelector(".step-mini-text");
+    dot.className   = "step-dot-mini " + state;
+    label.className = "step-mini-text " + state;
+    if (text) label.textContent = state === 'active' ? text.replace(/\.+$/, '') : text;
+  }
+
+  /* 逾時偵測 */
+  setInterval(function() {
+    if (lastStatus !== "deploying" && lastStatus !== "pending") return;
+    var ageMin = (Date.now() - deployStartTime.getTime()) / 60000;
+    if (ageMin >= 15 && !timeoutCriticalShown) {
+      timeoutCriticalShown = timeoutWarnShown = true;
+      clearInterval(carouselTimer);
+      document.getElementById('timeoutBanner').classList.remove('show');
+      document.getElementById('mainTitle').textContent = t.timeout_critical;
+      document.getElementById('mainDesc').textContent  = t.timeout_critical_desc;
+      document.getElementById("crabEmoji").textContent = "⚠️";
+      document.getElementById("crabEmoji").style.animation = "none";
+      document.getElementById('stepsCard').style.display = 'none';
+      showSupportCard({ showRetry: false });
+    } else if (ageMin >= 10 && !timeoutWarnShown) {
+      timeoutWarnShown = true;
+      document.getElementById('timeoutBanner').classList.add('show');
+    }
+  }, 30000);
+
+  var pollErrorCount = 0;
+
+  async function poll() {
+    try {
+      var resp = await fetch("/api/purchase/status/" + TOKEN);
+      if (resp.ok) {
+        pollErrorCount = 0;
+        updateUI(await resp.json());
+      } else {
+        pollErrorCount++;
+      }
+    } catch(e) {
+      pollErrorCount++;
+    }
+    if (pollErrorCount >= 20) {
+      clearInterval(pollTimer);
+      document.getElementById("mainTitle").textContent = t.net_support_title;
+      document.getElementById("mainDesc").textContent  = "";
+      document.getElementById("crabEmoji").textContent = "📶";
+      document.getElementById("crabEmoji").style.animation = "none";
+      document.getElementById('stepsCard').style.display = 'none';
+      showSupportCard({ title: t.net_support_title, desc: t.net_support_desc });
+    }
+  }
+
+  async function retryDeploy() {
+    document.getElementById('supportModalOverlay').classList.remove('show');
+    document.getElementById('stepsCard').style.display = 'block';
+    document.getElementById("mainTitle").textContent = t.retry_title;
+    document.getElementById("mainDesc").textContent  = t.wait;
+    document.getElementById("crabEmoji").textContent = "🦀";
+    document.getElementById("crabEmoji").style.animation = "crabWalk 2s ease-in-out infinite";
+    document.getElementById("progressFill").style.background = "linear-gradient(90deg, #ef4444, #FF6B35)";
+    progressValue = 10;
+    lastStatus = "";
+    setProgress(10);
+    setStep(1, "done",   t.step1);
+    setStep(2, "active", t.step2_active);
+    setStep(3, "",       t.step3);
+    setStep(4, "",       t.step4);
+    startCarousel();
+
+    try {
+      var resp = await fetch("/api/purchase/retry/" + TOKEN, { method: "POST" });
+      if (!resp.ok) {
+        var err = await resp.json();
+        document.getElementById("mainTitle").textContent = t.retry_fail;
+        document.getElementById("mainDesc").textContent  = "";
+        document.getElementById("crabEmoji").textContent = "😟";
+        document.getElementById("crabEmoji").style.animation = "none";
+        document.getElementById('stepsCard').style.display = 'none';
+        showSupportCard({ showRetry: false, failReason: err.error });
+        return;
+      }
+      pollErrorCount = 0;
+      deployStartTime = new Date();
+      timeoutWarnShown = timeoutCriticalShown = false;
+      poll();
+      pollTimer = setInterval(poll, 5000);
+    } catch(e) {
+      document.getElementById("mainTitle").textContent = t.net_err2;
+      document.getElementById("mainDesc").textContent  = t.net_refresh;
+    }
+  }
+
+  poll();
+  pollTimer = setInterval(poll, 5000);
+
+  /* 假進度慢爬 */
+  setInterval(function() {
+    if (lastStatus === "deploying" && progressValue < 75) {
+      setProgress(progressValue + 1);
+    }
+  }, 3000);
+</script>
+{% endblock %}

@@ -1,0 +1,669 @@
+{% extends "system_base.html" %}
+
+{% block title %}AI 余额充值 — 大闸蟹{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* btn-red / btn-ghost replaced by s-btn system — kept for backward compat */
+  .btn-red { display: none; }
+  .btn-ghost { display: none; }
+  .inp {
+    width: 100%; background: #1e2433; border: 1.5px solid #2d3748;
+    border-radius: 12px; padding: 16px 18px; color: #fff; font-size: 16px;
+    outline: none; transition: border-color .2s; box-sizing: border-box;
+  }
+  .inp:focus { border-color: #E85542; }
+  .inp::placeholder { color: #4a5568; }
+  .chip {
+    padding: 10px 18px; border-radius: 10px; border: 1.5px solid #2d3748;
+    background: #1a2030; color: #ccc; font-weight: 700; font-size: 15px;
+    cursor: pointer; transition: all .15s; user-select: none;
+  }
+  .chip:hover { border-color: #E85542; color: #fff; }
+  .chip.active { border-color: #E85542; background: #2a1510; color: #E85542; }
+  .step { display: none; }
+  .step.active { display: block; }
+  .bal-bar { background: #1e2433; border-radius: 99px; height: 8px; overflow: hidden; }
+  .bal-fill { background: linear-gradient(90deg, #E85542, #ff8c6a); height: 100%;
+              border-radius: 99px; transition: width 1s ease; }
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 50; padding: 20px; backdrop-filter: blur(4px);
+  }
+  .overlay.hidden { display: none; }
+  @keyframes pop { 0%{transform:scale(.5);opacity:0} 70%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
+  .burst { animation: pop .4s cubic-bezier(.34,1.56,.64,1); }
+  @keyframes shimmer { 0%{opacity:.4} 50%{opacity:1} 100%{opacity:.4} }
+  .shimmer { animation: shimmer 1.4s infinite; }
+  .order-card {
+    border: 1.5px solid #2d3748; border-radius: 14px; padding: 16px;
+    cursor: pointer; transition: all .2s; background: #1a2030;
+  }
+  .order-card:hover { border-color: #E85542; background: #1e1510; }
+  .order-card.selected { border-color: #E85542; background: #2a1510; }
+  /* step-dot is now unused — layout handled in HTML */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 2px; }
+  .crypto-addr {
+    font-family: monospace; font-size: 12px; color: #f59e0b;
+    word-break: break-all; cursor: pointer; padding: 10px;
+    background: #1a2030; border-radius: 8px; border: 1px solid #2d3748;
+    transition: background .15s;
+  }
+  .crypto-addr:hover { background: #222c40; }
+  .copy-hint { font-size: 11px; color: #555; margin-top: 4px; text-align: center; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex flex-col items-center justify-start px-4 py-10">
+
+  <!-- Back -->
+  <div class="w-full max-w-md mb-4">
+    <a href="/" class="s-back flex items-center gap-1">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+      </svg>
+      返回首页
+    </a>
+  </div>
+
+  <!-- Header -->
+  <div class="w-full max-w-md text-center mb-8">
+    <div class="text-5xl mb-3">🦀</div>
+    <h1 class="text-2xl font-black tracking-tight">AI 余额充值</h1>
+    <p class="text-[#555] text-sm mt-1">为大闸蟹 AI 补充能量，继续畅聊</p>
+  </div>
+
+  <!-- Step indicator — circles + lines on one row, labels on second row -->
+  <div class="w-full max-w-md mb-8 px-2">
+    <!-- Row 1: circles + connector lines (all same height → lines stay centered) -->
+    <div class="flex items-center">
+      <div class="w-8 h-8 rounded-full bg-[#E85542] flex items-center justify-center text-xs font-black flex-shrink-0" id="dot1n">1</div>
+      <div class="flex-1 h-px" id="line1" style="background:#1e2433"></div>
+      <div class="w-8 h-8 rounded-full bg-[#1e2433] flex items-center justify-center text-xs font-black text-[#555] flex-shrink-0" id="dot2n">2</div>
+      <div class="flex-1 h-px" id="line2" style="background:#1e2433"></div>
+      <div class="w-8 h-8 rounded-full bg-[#1e2433] flex items-center justify-center text-xs font-black text-[#555] flex-shrink-0" id="dot3n">3</div>
+    </div>
+    <!-- Row 2: labels aligned under each dot -->
+    <div class="flex justify-between mt-1.5">
+      <span class="text-[10px] font-semibold text-[#E85542] w-8 text-center" id="dot1l">查账户</span>
+      <span class="text-[10px] font-semibold text-[#555] w-8 text-center" id="dot2l">选金额</span>
+      <span class="text-[10px] font-semibold text-[#555] w-8 text-center" id="dot3l">完成</span>
+    </div>
+  </div>
+
+  <div class="w-full max-w-md">
+
+    <!-- STEP 1 -->
+    <div class="step active" id="step1">
+      <div class="s-card p-6">
+        <h2 class="font-black text-lg mb-1">输入微信号</h2>
+        <p class="text-[#555] text-sm mb-6">填写购买时绑定的微信号，我们帮你找到账户</p>
+        <label class="block text-sm text-[#888] mb-2 font-semibold">微信号 <span class="text-[#E85542]">*</span></label>
+        <input id="wechatInput" class="inp mb-3" type="text"
+               placeholder="例如：tommy_123 或 wx_abcdef"
+               autocomplete="off" autocorrect="off" spellcheck="false"/>
+        <div id="step1Error" class="hidden text-[#E85542] text-sm mb-4 p-3 bg-[#2a1510] rounded-xl leading-relaxed"></div>
+        <button class="s-btn s-btn-primary s-btn-full s-btn-lg" id="lookupBtn" onclick="doLookup()">查询余额 →</button>
+      </div>
+      <p class="text-center text-[#3a3a4a] text-xs mt-4">
+        不知道微信号？<a href="/faq" class="text-[#E85542] hover:underline">查看帮助</a>
+      </p>
+    </div>
+
+    <!-- STEP 1b: 多帳戶選擇 -->
+    <div class="step" id="step1b">
+      <div class="s-card p-6">
+        <button onclick="showStep('step1')" class="flex items-center gap-1 text-[#555] hover:text-white text-sm mb-4 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+          重新输入
+        </button>
+        <h2 class="font-black text-lg mb-1">选择账户</h2>
+        <p class="text-[#555] text-sm mb-5">找到多个账户，请选择要充值的那个</p>
+        <div id="orderList" class="flex flex-col gap-3"></div>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step" id="step2">
+      <div class="s-card p-6 mb-4">
+        <button onclick="showStep('step1')" class="flex items-center gap-1 text-[#555] hover:text-white text-sm mb-4 transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
+          </svg>
+          重新查询
+        </button>
+        <div class="flex justify-between items-start mb-2">
+          <div>
+            <div class="text-xs text-[#555] font-semibold uppercase tracking-wider">当前余额</div>
+            <div class="text-3xl font-black mt-1" id="balDisplay">¥—</div>
+            <div class="text-xs text-[#3a3a4a] mt-0.5" id="balSub">约 — 次对话</div>
+          </div>
+          <div class="text-right">
+            <div class="text-xs text-[#555]">订单号</div>
+            <div class="text-sm font-mono text-[#888]" id="orderIdDisplay">—</div>
+          </div>
+        </div>
+        <div class="bal-bar mt-3">
+          <div class="bal-fill" id="balFill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="s-card p-6">
+        <h2 class="font-black text-lg mb-1">选择充值金额</h2>
+        <p class="text-[#555] text-sm mb-5">充值后立即到账，可无限次对话</p>
+        <div class="flex gap-3 mb-4">
+          <button class="chip flex-1" onclick="setAmount(50)">¥50</button>
+          <button class="chip flex-1" onclick="setAmount(100)">¥100</button>
+          <button class="chip flex-1 relative" onclick="setAmount(200)">
+            ¥200
+            <span style="position:absolute;top:-8px;right:-4px;font-size:9px;background:#E85542;
+                  color:#fff;padding:2px 6px;border-radius:20px;font-weight:900">省</span>
+          </button>
+        </div>
+        <div class="relative mb-1">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[#888] font-bold text-lg select-none">¥</span>
+          <input id="amountInput" class="inp pl-9" type="number" inputmode="numeric"
+                 min="10" max="9999" step="1" placeholder="或自行输入金额"
+                 oninput="onAmountInput()" onchange="onAmountInput()"/>
+        </div>
+        <p class="text-[#3a3a4a] text-xs mb-5">最低 ¥10，最高 ¥9,999</p>
+
+        <div id="previewBox" class="hidden bg-[#1a2030] rounded-2xl p-4 mb-5 border border-[#2d3748]">
+          <div class="flex justify-between text-sm mb-1">
+            <span class="text-[#888]">充值后余额</span>
+            <span class="font-bold text-white" id="previewBal">—</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-[#555]">约可对话</span>
+            <span class="text-[#888]" id="previewConvs">—</span>
+          </div>
+        </div>
+
+        <div id="step2Error" class="hidden text-[#E85542] text-sm mb-4 p-3 bg-[#2a1510] rounded-xl"></div>
+        <button class="s-btn s-btn-primary s-btn-full s-btn-lg" id="toConfirmBtn" onclick="goToConfirm()" disabled>立即充值 →</button>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step" id="step4">
+      <div class="s-card p-8 text-center">
+        <div class="text-7xl mb-4 burst" id="successEmoji">🎉</div>
+        <h2 class="text-2xl font-black mb-2">充值成功！</h2>
+        <p class="text-[#555] text-sm mb-6">余额已到账，继续和大闸蟹畅聊吧</p>
+        <div class="bg-[#1a2030] rounded-2xl p-5 mb-6 border border-[#2d3748]">
+          <div class="text-xs text-[#555] font-semibold uppercase tracking-wider mb-1">最新余额</div>
+          <div class="text-4xl font-black text-white" id="successBal">¥—</div>
+          <div class="text-sm text-[#555] mt-1" id="successConvs">约 — 次对话</div>
+        </div>
+        <a href="/" class="s-btn s-btn-primary s-btn-full s-btn-lg">返回首页 🦀</a>
+        <button onclick="resetAll()" class="s-btn s-btn-ghost s-btn-full s-btn-lg mt-3">继续充值</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL — 确认付款 -->
+  <div class="overlay hidden" id="confirmModal">
+    <div class="s-card p-6 w-full max-w-sm">
+      <div class="text-center mb-5">
+        <div class="text-4xl mb-2">💳</div>
+        <h3 class="text-xl font-black">确认充值</h3>
+        <p class="text-[#555] text-sm mt-1">请核对以下信息</p>
+      </div>
+
+      <!-- 金额摘要 -->
+      <div class="bg-[#1a2030] rounded-xl p-4 mb-5 border border-[#2d3748]">
+        <div class="flex justify-between py-2 border-b border-[#2d3748] text-sm">
+          <span class="text-[#888]">充值金额</span>
+          <span class="font-black text-white text-lg" id="modalAmount">¥—</span>
+        </div>
+        <div class="flex justify-between py-2 border-b border-[#2d3748] text-sm">
+          <span class="text-[#888]">充值后余额</span>
+          <span class="font-bold" id="modalAfter">¥—</span>
+        </div>
+        <div class="flex justify-between py-2 text-sm">
+          <span class="text-[#888]">预计对话次数</span>
+          <span class="text-[#888]" id="modalConvs">约 — 次</span>
+        </div>
+      </div>
+
+      {% if is_china %}
+      <!-- 中国大陆：微信支付 / 支付宝 -->
+      <div class="space-y-2 mb-5">
+        <div class="flex items-center gap-3 p-3 rounded-xl border border-[#07C160] bg-[#0d1f12]">
+          <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#07C160"/><text x="14" y="19" text-anchor="middle" fill="white" font-size="14" font-weight="bold">微</text></svg>
+          <span class="font-medium text-sm">微信支付</span>
+          <span class="ml-auto text-[#07C160] text-sm">✓ 已选择</span>
+        </div>
+        <div class="flex items-center gap-3 p-3 rounded-xl border border-[#2d3748] bg-[#1a2030] opacity-50">
+          <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#1677FF"/><text x="14" y="19" text-anchor="middle" fill="white" font-size="14" font-weight="bold">支</text></svg>
+          <span class="font-medium text-sm text-[#666]">支付宝（即将上线）</span>
+        </div>
+      </div>
+      {% if wechat_pay_account %}
+      <div class="bg-[#1a2030] rounded-xl p-4 mb-4 border border-[#2d3748]">
+        <p class="text-xs text-[#888] mb-2 font-semibold">微信转账收款方</p>
+        <div class="flex items-center justify-between">
+          <span class="font-mono text-white font-bold text-base" id="wechatPayAccount">{{ wechat_pay_account }}</span>
+          <button onclick="copyWechatAccount()" class="text-xs text-[#E85542] hover:underline ml-3">复制</button>
+        </div>
+        <p class="text-[#555] text-xs mt-1" id="wechatCopyHint">点击复制微信号</p>
+      </div>
+      {% endif %}
+      <div class="flex items-start gap-2 bg-[#1a1f10] border border-[#2d4010] rounded-xl p-3 mb-5">
+        <span class="text-base mt-0.5">💡</span>
+        <p class="text-[#8aaa50] text-xs leading-relaxed">{% if wechat_pay_account %}请微信搜索上方账号并转账指定金额，完成后点击"确认付款"，余额将立即到账。{% else %}请联系客服获取微信转账账号，完成转账后点击"确认付款"。{% endif %}如有疑问请联系客服。</p>
+      </div>
+      <div id="modalError" class="hidden text-[#E85542] text-sm mb-4 p-3 bg-[#2a1510] rounded-xl"></div>
+      <button class="s-btn s-btn-primary s-btn-full s-btn-lg mb-3" id="modalConfirmBtn" onclick="doConfirm()">✅ 确认付款</button>
+
+      {% else %}
+      <!-- 海外：USDT 加密支付 -->
+      <div class="space-y-2 mb-5">
+        <div class="flex items-center gap-3 p-3 rounded-xl border border-[var(--accent)] bg-[#1a1510]">
+          <div style="width:26px;height:26px;border-radius:6px;background:linear-gradient(135deg,#f59e0b,#ef4444);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#fff;font-size:12px;flex-shrink:0;">₮</div>
+          <span class="font-medium text-sm">USDT 加密支付 (TRC-20)</span>
+          <span class="ml-auto text-[var(--accent)] text-sm">✓ 已选择</span>
+        </div>
+        <div class="flex items-center gap-3 p-3 rounded-xl border border-[#2d3748] bg-[#1a2030] opacity-50">
+          <svg width="26" height="26" viewBox="0 0 28 28" fill="none"><rect width="28" height="28" rx="6" fill="#07C160"/><text x="14" y="19" text-anchor="middle" fill="white" font-size="14" font-weight="bold">微</text></svg>
+          <span class="font-medium text-sm text-[#666]">微信支付（仅限中国大陆）</span>
+        </div>
+      </div>
+
+      <!-- USDT 转账说明 -->
+      <div class="s-card p-4 mb-5">
+        <p class="text-xs font-semibold text-[#888] mb-3">转账说明</p>
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between items-center">
+            <span class="text-[#888]">转账金额</span>
+            <span class="font-bold text-[#f59e0b]" id="modalUsdtAmount">— USDT</span>
+          </div>
+          <div class="text-xs text-[#555]" id="modalUsdtRate">汇率 1 USDT ≈ ¥{{ "%.2f"|format(1/usdt_rate) }}</div>
+          <div>
+            <p class="text-[#888] text-xs mb-1">收款地址 (TRC-20)</p>
+            {% if usdt_wallet %}
+            <div class="crypto-addr" id="cryptoAddrRecharge" onclick="copyRechargeAddr()" title="点击复制">{{ usdt_wallet }}</div>
+            <p class="copy-hint" id="copyHintRecharge">👆 点击复制地址</p>
+            {% else %}
+            <div class="text-[#E85542] text-xs p-2 bg-[#2a1510] rounded-lg">⚠️ 收款地址未配置，请联系客服获取转账地址。</div>
+            {% endif %}
+          </div>
+          <div class="text-[#888] text-xs bg-[#1a2030] rounded-lg p-2">⚠️ 请转账正确金额至上方地址，转账完成后填入交易哈希并点击"我已完成转账"，客服确认到账后立即充值。</div>
+        </div>
+      </div>
+      <!-- USDT TX Hash 用于审计核对 -->
+      <div class="mb-4">
+        <label class="text-xs text-[#888] mb-1 block">USDT 交易哈希 (Transaction Hash)</label>
+        <input type="text" id="txHashInput" placeholder="粘贴交易哈希，如 a1b2c3d4..." maxlength="128"
+               class="w-full bg-[#1a2030] border border-[#2d3748] rounded-lg px-3 py-2 text-sm text-white placeholder-[#555] focus:border-[var(--accent)] focus:outline-none font-mono">
+        <p class="text-[#555] text-xs mt-1">在转账成功后，从区块链浏览器或钱包复制 TXID</p>
+      </div>
+      <div id="modalError" class="hidden text-[#E85542] text-sm mb-4 p-3 bg-[#2a1510] rounded-xl"></div>
+      <button class="s-btn s-btn-primary s-btn-full s-btn-lg mb-3" id="modalConfirmBtn" onclick="doConfirm()">✅ 我已完成转账</button>
+      {% endif %}
+
+      <button class="s-btn s-btn-ghost s-btn-full" onclick="closeModal()">取消</button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var state = { wechatId:'', selectedToken:'', selectedOrderId:'',
+              balanceYuan:0, balanceUsd:0, conversations:0, amountYuan:0 };
+
+// ── Step display ──────────────────────────────────────
+function showStep(name) {
+  document.querySelectorAll('.step').forEach(function(s){ s.classList.remove('active'); });
+  var el = document.getElementById(name);
+  if (el) { el.classList.add('active'); }
+  updateDots(name);
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function updateDots(stepName) {
+  var map = {step1:1, step1b:1, step2:2, step4:3};
+  var cur = map[stepName] || 1;
+  [1,2,3].forEach(function(n){
+    var ni = document.getElementById('dot'+n+'n');
+    var li = document.getElementById('dot'+n+'l');
+    if (n < cur) {
+      ni.className = 'w-8 h-8 rounded-full bg-[#1e4028] flex items-center justify-center text-xs font-black text-[#4ade80]';
+      ni.textContent = '✓';
+      li.className = 'text-[10px] mt-1 font-semibold text-[#4ade80]';
+    } else if (n === cur) {
+      ni.className = 'w-8 h-8 rounded-full bg-[#E85542] flex items-center justify-center text-xs font-black text-white';
+      ni.textContent = String(n);
+      li.className = 'text-[10px] mt-1 font-semibold text-[#E85542]';
+    } else {
+      ni.className = 'w-8 h-8 rounded-full bg-[#1e2433] flex items-center justify-center text-xs font-black text-[#555]';
+      ni.textContent = String(n);
+      li.className = 'text-[10px] mt-1 font-semibold text-[#555]';
+    }
+  });
+  [1,2].forEach(function(n){
+    document.getElementById('line'+n).style.background = n < cur ? '#1e4028' : '#1e2433';
+  });
+}
+
+// ── Step 1 ────────────────────────────────────────────
+function doLookup() {
+  var wid = document.getElementById('wechatInput').value.trim();
+  if (!wid) { setS1Err('请填写微信号'); return; }
+  state.wechatId = wid;
+  var btn = document.getElementById('lookupBtn');
+  btn.disabled = true;
+  btn.textContent = '查询中...';
+  hideS1Err();
+
+  fetch('/api/recharge/lookup', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({wechat_id: wid})
+  })
+  .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,data:d}; }); })
+  .then(function(res){
+    btn.disabled = false;
+    btn.textContent = '查询余额 →';
+    if (!res.ok) { setS1Err(res.data.error || '查询失败，请稍后重试'); return; }
+    var orders = res.data.orders || [];
+    if (orders.length === 1) { selectOrder(orders[0]); }
+    else { renderOrderList(orders); showStep('step1b'); }
+  })
+  .catch(function(){
+    btn.disabled = false;
+    btn.textContent = '查询余额 →';
+    setS1Err('网络错误，请检查连接后重试');
+  });
+}
+
+function setS1Err(msg) {
+  var e = document.getElementById('step1Error');
+  e.textContent = msg;
+  e.classList.remove('hidden');
+}
+function hideS1Err() { document.getElementById('step1Error').classList.add('hidden'); }
+
+document.getElementById('wechatInput').addEventListener('keydown', function(e){
+  if (e.key === 'Enter') { doLookup(); }
+});
+
+// ── Step 1b ───────────────────────────────────────────
+function renderOrderList(orders) {
+  var list = document.getElementById('orderList');
+  list.textContent = ''; // safe clear
+  orders.forEach(function(o, i){
+    var card = document.createElement('div');
+    card.className = 'order-card' + (i===0?' selected':'');
+
+    // row1: 订单号
+    var row1 = document.createElement('div');
+    row1.className = 'flex justify-between items-center mb-2';
+    var lbl = document.createElement('span');
+    lbl.className = 'text-sm text-[#888]';
+    lbl.textContent = '订单号';
+    var val = document.createElement('span');
+    val.className = 'font-mono text-sm text-white';
+    val.textContent = o.order_id_short;
+    row1.appendChild(lbl); row1.appendChild(val);
+
+    // row2: balance + convs
+    var row2 = document.createElement('div');
+    row2.className = 'flex justify-between items-end mb-2';
+    var left = document.createElement('div');
+    var lbl2 = document.createElement('div');
+    lbl2.className = 'text-xs text-[#555]';
+    lbl2.textContent = '当前余额';
+    var big = document.createElement('div');
+    big.className = 'text-2xl font-black';
+    big.textContent = '¥' + o.balance_yuan.toFixed(1);
+    left.appendChild(lbl2); left.appendChild(big);
+    var right = document.createElement('div');
+    right.style.textAlign = 'right';
+    var lbl3 = document.createElement('div');
+    lbl3.className = 'text-xs text-[#555]';
+    lbl3.textContent = '约可对话';
+    var cnt = document.createElement('div');
+    cnt.className = 'text-sm text-[#888]';
+    cnt.textContent = fmtNum(o.conversations) + ' 次';
+    right.appendChild(lbl3); right.appendChild(cnt);
+    row2.appendChild(left); row2.appendChild(right);
+
+    // balance bar
+    var barWrap = document.createElement('div');
+    barWrap.className = 'bal-bar';
+    var barFill = document.createElement('div');
+    barFill.className = 'bal-fill';
+    barFill.style.width = Math.min(100, (o.balance_yuan/200)*100) + '%';
+    barWrap.appendChild(barFill);
+
+    card.appendChild(row1);
+    card.appendChild(row2);
+    card.appendChild(barWrap);
+
+    card.onclick = function(){
+      document.querySelectorAll('.order-card').forEach(function(c){ c.classList.remove('selected'); });
+      card.classList.add('selected');
+      selectOrder(o);
+    };
+    list.appendChild(card);
+  });
+  if (orders.length > 0) { selectOrder(orders[0]); }
+}
+
+function selectOrder(o) {
+  state.selectedToken   = o.token;
+  state.selectedOrderId = o.order_id_short;
+  state.balanceYuan     = o.balance_yuan;
+  state.balanceUsd      = o.balance_usd;
+  state.conversations   = o.conversations;
+  showStep2();
+}
+
+// ── Step 2 ────────────────────────────────────────────
+function showStep2() {
+  document.getElementById('balDisplay').textContent = '¥' + state.balanceYuan.toFixed(1);
+  document.getElementById('balSub').textContent = '约 ' + fmtNum(state.conversations) + ' 次对话';
+  document.getElementById('orderIdDisplay').textContent = state.selectedOrderId;
+  var pct = Math.min(100, (state.balanceYuan/200)*100);
+  document.getElementById('balFill').style.width = pct + '%';
+  showStep('step2');
+}
+
+function setAmount(n) {
+  state.amountYuan = n;
+  document.getElementById('amountInput').value = n;
+  document.querySelectorAll('.chip').forEach(function(c){
+    c.classList.toggle('active', parseFloat(c.textContent.replace('¥','')) === n);
+  });
+  updatePreview();
+}
+
+function onAmountInput() {
+  var v = parseFloat(document.getElementById('amountInput').value) || 0;
+  state.amountYuan = v;
+  document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
+  updatePreview();
+}
+
+function updatePreview() {
+  var a = state.amountYuan;
+  var btn = document.getElementById('toConfirmBtn');
+  var preview = document.getElementById('previewBox');
+  if (!a || a < 10 || a > 9999) {
+    btn.disabled = true;
+    preview.classList.add('hidden');
+    return;
+  }
+  var USD_PER_YUAN = 0.07;
+  var DISPLAY_RATE = 7.3; // $1 = ¥7.3 for display
+  var afterUsd   = state.balanceUsd + a * USD_PER_YUAN;
+  var afterYuan  = Math.round(afterUsd * DISPLAY_RATE * 10) / 10;
+  var afterConvs = Math.floor(afterUsd / 0.000014);
+  document.getElementById('previewBal').textContent   = '¥' + afterYuan.toFixed(1);
+  document.getElementById('previewConvs').textContent = fmtNum(afterConvs) + ' 次';
+  preview.classList.remove('hidden');
+  btn.disabled = false;
+}
+
+var IS_CHINA   = {{ 'true' if is_china else 'false' }};
+var USDT_RATE  = {{ usdt_rate }};  // yuan per USDT inverse: USDT = yuan * USDT_RATE
+
+function goToConfirm() {
+  var a = state.amountYuan;
+  if (!a || a < 10 || a > 9999) { return; }
+  var USD_PER_YUAN = 0.07;
+  var DISPLAY_RATE = 7.3; // $1 = ¥7.3 for display
+  var afterUsd   = state.balanceUsd + a * USD_PER_YUAN;
+  var afterYuan  = Math.round(afterUsd * DISPLAY_RATE * 10) / 10;
+  var afterConvs = Math.floor(afterUsd / 0.000014);
+  document.getElementById('modalAmount').textContent = '¥' + a.toFixed(0);
+  document.getElementById('modalAfter').textContent  = '¥' + afterYuan.toFixed(1);
+  document.getElementById('modalConvs').textContent  = '约 ' + fmtNum(afterConvs) + ' 次';
+  document.getElementById('modalError').classList.add('hidden');
+  // 海外用戶：動態計算 USDT 金額
+  if (!IS_CHINA) {
+    var usdtAmt = (a * USDT_RATE).toFixed(2);
+    var usdtEl = document.getElementById('modalUsdtAmount');
+    if (usdtEl) usdtEl.textContent = usdtAmt + ' USDT';
+  }
+  var btn = document.getElementById('modalConfirmBtn');
+  btn.disabled = false;
+  document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+// ── Modal ─────────────────────────────────────────────
+function closeModal() { document.getElementById('confirmModal').classList.add('hidden'); }
+
+function copyWechatAccount() {
+  var el = document.getElementById('wechatPayAccount');
+  if (!el) return;
+  var text = el.textContent.trim();
+  var hint = document.getElementById('wechatCopyHint');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      if (hint) hint.textContent = '✅ 已复制！';
+      setTimeout(function() { if (hint) hint.textContent = '点击复制微信号'; }, 2000);
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); if (hint) hint.textContent = '✅ 已复制！'; } catch(e){}
+    document.body.removeChild(ta);
+    setTimeout(function() { if (hint) hint.textContent = '点击复制微信号'; }, 2000);
+  }
+}
+
+function copyRechargeAddr() {
+  var addr = document.getElementById('cryptoAddrRecharge');
+  if (!addr) return;
+  var text = addr.textContent.trim();
+  var hint = document.getElementById('copyHintRecharge');
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function() {
+      if (hint) hint.textContent = '✅ 已复制！';
+      setTimeout(function() { if (hint) hint.textContent = '👆 点击复制地址'; }, 2000);
+    });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); if (hint) hint.textContent = '✅ 已复制！'; } catch(e){}
+    document.body.removeChild(ta);
+    setTimeout(function() { if (hint) hint.textContent = '👆 点击复制地址'; }, 2000);
+  }
+}
+
+function doConfirm() {
+  var btn = document.getElementById('modalConfirmBtn');
+  var err = document.getElementById('modalError');
+  var txInput = document.getElementById('txHashInput');
+  var txId;
+  if (txInput) {
+    // USDT 用户：必须填写 tx hash
+    txId = txInput.value.trim();
+    if (txId.length < 20) {
+      err.textContent = '请填写 USDT 交易哈希（至少 20 个字符）';
+      err.classList.remove('hidden');
+      txInput.focus();
+      return;
+    }
+  } else {
+    // 微信用户：自动生成审计参考号
+    txId = 'wechat-' + (state.selectedToken || '').slice(-8) + '-' + Date.now();
+  }
+
+  btn.disabled = true;
+  btn.textContent = '处理中...';
+  err.classList.add('hidden');
+
+  fetch('/api/recharge/confirm', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      token:       state.selectedToken,
+      wechat_id:   state.wechatId,
+      amount_yuan: state.amountYuan,
+      tx_id:       txId,
+    })
+  })
+  .then(function(r){ return r.json().then(function(d){ return {ok:r.ok,data:d}; }); })
+  .then(function(res){
+    if (!res.ok) {
+      err.textContent = res.data.error || '充值失败，请稍后重试';
+      err.classList.remove('hidden');
+      btn.disabled = false;
+      btn.textContent = btn.dataset.origText || '✅ 确认付款';
+      return;
+    }
+    closeModal();
+    state.balanceYuan   = res.data.balance_yuan;
+    state.balanceUsd    = res.data.balance_usd;
+    state.conversations = res.data.conversations;
+    showSuccess();
+  })
+  .catch(function(){
+    err.textContent = '网络错误，请重试';
+    err.classList.remove('hidden');
+    btn.disabled = false;
+    btn.textContent = '✅ 确认付款';
+  });
+}
+
+// ── Step 4 ────────────────────────────────────────────
+function showSuccess() {
+  document.getElementById('successBal').textContent   = '¥' + state.balanceYuan.toFixed(1);
+  document.getElementById('successConvs').textContent = '约 ' + fmtNum(state.conversations) + ' 次对话';
+  var emoji = document.getElementById('successEmoji');
+  emoji.style.animation = 'none';
+  void emoji.offsetWidth;
+  emoji.style.animation = '';
+  showStep('step4');
+}
+
+function resetAll() {
+  state = { wechatId:'', selectedToken:'', selectedOrderId:'',
+            balanceYuan:0, balanceUsd:0, conversations:0, amountYuan:0 };
+  document.getElementById('wechatInput').value = '';
+  document.getElementById('amountInput').value = '';
+  document.querySelectorAll('.chip').forEach(function(c){ c.classList.remove('active'); });
+  document.getElementById('previewBox').classList.add('hidden');
+  hideS1Err();
+  showStep('step1');
+}
+
+function fmtNum(n) {
+  if (n >= 10000) { return (n/10000).toFixed(1) + '万'; }
+  return n.toLocaleString ? n.toLocaleString() : String(n);
+}
+
+document.getElementById('confirmModal').addEventListener('click', function(e){
+  if (e.target === this) { closeModal(); }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "system_base.html" %}
+
+{% block title %}出错了 — 大闸蟹{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center p-6" style="min-height:100vh;">
+  <div class="text-center">
+    <div class="text-6xl mb-6">🦀</div>
+    <h1 class="text-2xl font-black mb-4">{{ message }}</h1>
+    <a href="/landing" class="s-back" style="justify-content:center;">← 返回首页</a>
+  </div>
+</div>
+{% endblock %}

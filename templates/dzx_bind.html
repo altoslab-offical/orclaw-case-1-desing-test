@@ -1,0 +1,70 @@
+{% extends "system_base.html" %}
+
+{% block title %}绑定微信 — 大闸蟹{% endblock %}
+
+{% block extra_css %}
+<style>
+  .input-field {
+    width: 100%; background: var(--elevated); border: 1px solid var(--border-strong);
+    border-radius: var(--r-md); padding: 14px 16px; color: var(--text-1); font-size: 16px;
+    outline: none; transition: border-color var(--t-base); font-family: inherit;
+  }
+  .input-field:focus { border-color: var(--success); }
+  .wechat-icon { font-size: 48px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center p-6 min-h-screen">
+  <div class="w-full max-w-sm text-center">
+
+    <div class="mb-6">
+      <span class="wechat-icon">💬</span>
+    </div>
+
+    <h1 class="text-2xl font-black mb-2">绑定微信号</h1>
+    <p class="text-sm mb-8" style="color: var(--text-3);">绑定后可用微信号查询 AI 余额和充值</p>
+
+    <!-- 進度提示 -->
+    <div class="flex items-center justify-center gap-3 mb-8">
+      <div class="flex items-center gap-1 text-sm" style="color: var(--success);">
+        <span class="w-5 h-5 rounded-full text-black text-xs font-bold flex items-center justify-center" style="background: var(--success);">✓</span>
+        <span>支付完成</span>
+      </div>
+      <div class="w-8 h-px" style="background: var(--border-strong);"></div>
+      <div class="flex items-center gap-1 text-sm font-bold" style="color: var(--text-1);">
+        <span class="w-5 h-5 rounded-full text-black text-xs font-bold flex items-center justify-center" style="background: var(--success);">2</span>
+        <span>微信绑定</span>
+      </div>
+      <div class="w-8 h-px" style="background: var(--border-strong);"></div>
+      <div class="flex items-center gap-1 text-sm" style="color: var(--text-3);">
+        <span class="w-5 h-5 rounded-full text-xs font-bold flex items-center justify-center" style="background: var(--elevated); color: var(--text-3);">3</span>
+        <span>部署中</span>
+      </div>
+    </div>
+
+    <form method="POST" class="s-card p-6 text-left">
+      <label class="block text-sm mb-2" style="color: var(--text-2);">你的微信号 <span style="color: var(--accent);">*</span></label>
+      <input
+        class="input-field mb-2"
+        type="text"
+        name="wechat_id"
+        placeholder="请输入微信号（如：wxid_abc123）"
+        autocomplete="off"
+        required
+      />
+      <p class="text-xs mb-6" style="color: var(--text-3);">用于后续查询余额和充值，请确保填写正确</p>
+
+      {% if error %}
+      <p class="text-sm mb-4" style="color: var(--accent);">{{ error }}</p>
+      {% endif %}
+
+      <button type="submit" class="s-btn s-btn-primary s-btn-full" style="padding: 16px; font-size: 16px;">
+        确认绑定，开始部署 →
+      </button>
+    </form>
+
+    <p class="text-xs mt-6" style="color: var(--text-4);">订单号：{{ token[:12] }}...</p>
+  </div>
+</div>
+{% endblock %}

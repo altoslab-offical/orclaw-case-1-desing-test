@@ -1,0 +1,146 @@
+{% extends "system_base.html" %}
+
+{% block title %}{{ 'Get Started — ORCLAW' if lang == 'en' else '购买方案 — 大闸蟹' }}{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center p-6">
+  <div class="w-full max-w-md">
+    <!-- Back link -->
+    <a href="/landing#pricing" class="s-back" data-i18n="purchase.back">← 返回方案列表</a>
+
+    <!-- Plan badge -->
+    <div class="mt-6 mb-8">
+      <h1 class="text-3xl font-black mb-2"><span data-i18n="purchase.heading">购买</span> {{ plan_info.name }}</h1>
+      <p class="text-[#666]">¥{{ plan_info.price }}<span data-i18n="purchase.price_suffix">/月 · AI 使用费另计</span></p>
+    </div>
+
+    <!-- Order form -->
+    <form action="/purchase/submit" method="POST" class="s-card p-8 space-y-5">
+      <input type="hidden" name="plan" value="{{ plan }}">
+      <input type="hidden" name="language" value="{{ lang }}">
+
+      <div>
+        <label class="s-label mb-2" data-i18n="purchase.name_label">联系人姓名 *</label>
+        <input class="s-input" type="text" name="contact_name" data-i18n-placeholder="purchase.name_placeholder" placeholder="你的名字" required maxlength="100">
+      </div>
+
+      <div>
+        <label class="s-label mb-2" data-i18n="purchase.contact_label">联系方式（微信号或手机）</label>
+        <input class="s-input" type="text" name="contact_info" data-i18n-placeholder="purchase.contact_placeholder" placeholder="选填，方便我们联系你" maxlength="200">
+      </div>
+
+      <div>
+        <label class="s-label mb-2" data-i18n="purchase.api_label">AI API Key *</label>
+        <input class="s-input" type="text" name="api_key" placeholder="sk-xxx / AIzaSy-xxx" required minlength="10" maxlength="500">
+        <p class="s-hint mt-1" data-i18n="purchase.api_hint">支持 OpenAI / Anthropic / Google / DeepSeek 等</p>
+      </div>
+
+      <div>
+        <label class="s-label mb-2" data-i18n="purchase.model_label">AI 模型（可选）</label>
+        <select class="s-select" name="ai_model">
+          <option value="" data-i18n="purchase.model_default">默认（自动选择）</option>
+          <option value="openai/gpt-4o-mini">GPT-4o Mini</option>
+          <option value="openai/gpt-4o">GPT-4o</option>
+          <option value="anthropic/claude-sonnet-4-20250514">Claude Sonnet</option>
+          <option value="google/gemini-2.0-flash">Gemini 2.0 Flash</option>
+          <option value="deepseek/deepseek-chat">DeepSeek Chat</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="s-label mb-2" data-i18n="purchase.duration_label">订阅时长</label>
+        <select class="s-select" name="duration_months" id="duration-select" onchange="updatePrice()">
+          <option value="1" data-months="1">1 个月</option>
+          <option value="3" data-months="3">3 个月</option>
+          <option value="6" data-months="6">6 个月</option>
+          <option value="12" data-months="12">12 个月</option>
+        </select>
+        <p class="s-hint mt-2" id="price-summary" style="font-size:14px;color:#4f46e5;font-weight:600;">
+          合计：¥<span id="total-price">{{ plan_info.price }}</span>
+        </p>
+        <p class="s-hint mt-1" id="expiry-hint" style="font-size:13px;color:#888;"></p>
+      </div>
+
+      <button type="submit" class="s-btn s-btn-primary s-btn-full s-btn-lg mt-4" data-i18n="purchase.submit">
+        下一步：确认支付 →
+      </button>
+    </form>
+
+    <p class="text-center text-[#333] text-xs mt-6" data-i18n="purchase.terms">
+      购买即表示同意我们的服务条款 · 到期不续费自动停止
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var LANG = '{{ lang }}';
+var BASE_PRICE = {{ plan_info.price }};
+
+function updatePrice() {
+  var months = parseInt(document.getElementById('duration-select').value) || 1;
+  var total = BASE_PRICE * months;
+  var sel = document.getElementById('duration-select');
+  var opts = sel.options;
+  for (var i = 0; i < opts.length; i++) {
+    var m = parseInt(opts[i].value);
+    var t = BASE_PRICE * m;
+    if (LANG === 'en') {
+      opts[i].text = m === 1 ? '1 Month' : m + ' Months (\u00a5' + t + ' total)';
+    } else {
+      opts[i].text = m + ' \u4e2a\u6708\uff08\u5171 \u00a5' + t + '\uff09';
+    }
+  }
+  var totalEl = document.getElementById('total-price');
+  if (totalEl) { totalEl.textContent = String(total); }
+
+  // 計算到期日
+  var expiry = new Date();
+  expiry.setMonth(expiry.getMonth() + months);
+  var y = expiry.getFullYear();
+  var mo = expiry.getMonth() + 1;
+  var d = expiry.getDate();
+  var expiryStr = LANG === 'en'
+    ? 'Expires: ' + y + '/' + (mo < 10 ? '0' + mo : mo) + '/' + (d < 10 ? '0' + d : d)
+    : '到期日：' + y + ' 年 ' + mo + ' 月 ' + d + ' 日';
+  var expiryEl = document.getElementById('expiry-hint');
+  if (expiryEl) { expiryEl.textContent = expiryStr; }
+}
+
+window.addEventListener('load', function() { updatePrice(); });
+
+var T = {
+  en: {
+    'purchase.title': 'Purchase — ORCLAW',
+    'purchase.back': '← Back to plans',
+    'purchase.heading': 'Purchase',
+    'purchase.price_suffix': '/mo · AI usage billed separately',
+    'purchase.name_label': 'Contact Name *',
+    'purchase.name_placeholder': 'Your name',
+    'purchase.contact_label': 'Contact Info (WeChat ID or phone)',
+    'purchase.contact_placeholder': 'Optional, so we can reach you',
+    'purchase.api_label': 'AI API Key *',
+    'purchase.api_hint': 'Supports OpenAI / Anthropic / Google / DeepSeek etc.',
+    'purchase.model_label': 'AI Model (optional)',
+    'purchase.model_default': 'Default (auto-select)',
+    'purchase.duration_label': 'Subscription Duration',
+    'purchase.price_hint': 'Total cost shown above',
+    'purchase.submit': 'Next: Confirm Payment →',
+    'purchase.terms': 'By purchasing you agree to our Terms · Auto-stops when expired'
+  }
+};
+(function() {
+  if (LANG !== 'en') return;
+  document.title = T.en['purchase.title'] || document.title;
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    if (T.en[key]) el.textContent = T.en[key];
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-placeholder');
+    if (T.en[key]) el.placeholder = T.en[key];
+  });
+})();
+</script>
+{% endblock %}

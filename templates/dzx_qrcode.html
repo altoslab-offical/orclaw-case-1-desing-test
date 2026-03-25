@@ -1,0 +1,350 @@
+{% extends "system_base.html" %}
+
+{% block title %}{% if lang == 'en' %}Bind QR Code — ORCLAW{% else %}绑定二维码 — 大闸蟹{% endif %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .qr-container { background: #fff; border-radius: var(--r-lg); padding: 20px; display: inline-block; }
+  .qr-container img { width: 240px; height: 240px; }
+  .btn-refresh {
+    background: transparent; border: 1px solid var(--border); color: var(--text-2);
+    padding: 12px 24px; border-radius: var(--r-md); cursor: pointer;
+    transition: all var(--t-base); font-size: 14px; font-family: inherit;
+  }
+  .btn-refresh:hover { border-color: var(--accent); color: var(--accent); }
+  .countdown { color: var(--accent); font-weight: 700; font-size: 14px; }
+  .success-box { background: #0a2e12; border: 1px solid var(--success); border-radius: var(--r-lg); padding: 24px; text-align: center; display: none; }
+  .step-badge { background: var(--elevated); color: var(--text-2); border-radius: 20px; padding: 4px 12px; font-size: 12px; display: inline-block; }
+  .step-badge.active { background: var(--accent); color: #fff; }
+  .fallback-info { text-align: center; padding: 20px; }
+  .fallback-title { color: var(--accent); font-weight: bold; font-size: 14px; }
+  .fallback-desc { color: var(--text-2); font-size: 12px; margin-top: 8px; }
+  .fallback-token { color: var(--text-1); font-size: 11px; margin-top: 12px; word-break: break-all; }
+  .token-box {
+    background: var(--elevated); border: 1px solid var(--border-strong); border-radius: var(--r-md);
+    padding: 12px 16px; font-family: monospace; font-size: 13px; color: var(--accent);
+    word-break: break-all; cursor: pointer; transition: border-color var(--t-base); position: relative;
+  }
+  .token-box:hover { border-color: var(--accent); }
+  .token-box .copy-hint { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 11px; font-family: 'Noto Sans SC', sans-serif; }
+  .token-box.copied { border-color: var(--success); }
+  .token-box.copied .copy-hint { color: var(--success); }
+  .devtools-card { background: #0d1117; border: 1px solid var(--border); border-radius: var(--r-lg); }
+  .code-block { background: #161b22; border-radius: 6px; padding: 10px 14px; font-family: monospace; font-size: 12px; color: #c9d1d9; overflow-x: auto; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-center p-6 min-h-screen">
+  <div class="w-full max-w-md text-center">
+
+    <h1 class="text-2xl font-black mb-2" data-i18n="qr.heading">扫码绑定你的大闸蟹</h1>
+    <p class="text-sm mb-8" style="color: var(--text-3);" data-i18n="qr.subheading">打开微信 → 扫一扫 → 完成绑定</p>
+
+    <!-- Steps -->
+    <div class="flex justify-center gap-3 mb-8">
+      <span class="step-badge active" id="badge1" data-i18n="qr.badge1">1. 扫码</span>
+      <span class="step-badge" id="badge2" data-i18n="qr.badge2">2. 授权</span>
+      <span class="step-badge" id="badge3" data-i18n="qr.badge3">3. 开始聊天</span>
+    </div>
+
+    <!-- QR Code -->
+    <div id="qrSection">
+      <div class="qr-container mb-4" id="qrBox">
+        <div id="qrLoading" style="width:240px;height:240px;display:flex;align-items:center;justify-content:center;color:#666;" data-i18n="qr.loading">
+          加载二维码中...
+        </div>
+        <img id="qrImage" style="display:none;" alt="QR Code">
+        <div id="qrFallback" class="fallback-info" style="display:none;">
+          <p class="fallback-title" data-i18n="qr.fallback_title">小程序尚未发布</p>
+          <p class="fallback-desc" data-i18n="qr.fallback_desc">请联系管理员获取预览二维码</p>
+          <p class="fallback-token" id="fallbackToken"></p>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <span id="countdownText" class="countdown"></span>
+      </div>
+
+      <button id="btnRefresh" class="btn-refresh" onclick="generateQR()" data-i18n="qr.refresh">
+        刷新二维码
+      </button>
+    </div>
+
+    <!-- Success -->
+    <div id="successSection" class="success-box">
+      <div class="text-4xl mb-4">🎉</div>
+      <h2 class="text-xl font-black mb-2" style="color: var(--success);" data-i18n="qr.success_title">绑定成功！</h2>
+      <p class="text-sm mb-4" style="color: var(--text-2);" data-i18n="qr.success_desc">你的大闸蟹已经准备好了，可以开始聊天</p>
+      <p class="text-xs" style="color: var(--text-3);" data-i18n="qr.success_close">你可以关闭此页面</p>
+    </div>
+
+    <!-- Bind Token -->
+    <div id="tokenSection" class="mt-6" style="display:none;">
+      <p class="text-xs mb-2" style="color: var(--text-3);" data-i18n="qr.token_label">绑定令牌（点击复制）</p>
+      <div class="token-box" id="tokenBox" onclick="copyToken()">
+        <span id="tokenValue">—</span>
+        <span class="copy-hint" id="copyHint" data-i18n="qr.copy">点击复制</span>
+      </div>
+    </div>
+
+    <!-- Instructions: Production flow -->
+    <div id="prodInstructions" class="s-card p-6 mt-8 text-left">
+      <h3 class="font-bold text-sm mb-4" style="color: var(--text-2);" data-i18n="qr.instructions_title">使用说明</h3>
+      <ol class="space-y-3 text-sm" style="color: var(--text-3);">
+        <li class="flex gap-3">
+          <span class="font-black flex-shrink-0" style="color: var(--accent);">1.</span>
+          <span data-i18n="qr.inst1">打开微信，扫描上方二维码</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="font-black flex-shrink-0" style="color: var(--accent);">2.</span>
+          <span data-i18n="qr.inst2">进入小程序后自动完成绑定</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="font-black flex-shrink-0" style="color: var(--accent);">3.</span>
+          <span data-i18n="qr.inst3">绑定成功后即可开始和你的 AI 助手聊天</span>
+        </li>
+      </ol>
+      <div class="mt-4 pt-4" style="border-top: 1px solid var(--border);">
+        <p class="text-xs" style="color: var(--text-4);" data-i18n="qr.expire_note">二维码有效期 30 分钟，过期请点击刷新</p>
+      </div>
+    </div>
+
+    <!-- Instructions: DevTools testing -->
+    <div id="devInstructions" class="devtools-card p-6 mt-8 text-left" style="display:none;">
+      <h3 class="font-bold text-sm mb-3" style="color: var(--accent);" data-i18n="qr.dev_title">🛠 开发者工具测试</h3>
+      <p class="text-xs mb-4" style="color: var(--text-2);" data-i18n="qr.dev_desc">小程序尚未发布，请在微信开发者工具中测试完整流程：</p>
+      <ol class="space-y-4 text-sm" style="color: #ccc;">
+        <li class="flex gap-3">
+          <span class="font-black flex-shrink-0" style="color: var(--accent);">1.</span>
+          <div><span data-i18n="qr.dev_step1">复制上方的绑定令牌</span></div>
+        </li>
+        <li class="flex gap-3">
+          <span class="font-black flex-shrink-0" style="color: var(--accent);">2.</span>
+          <div>
+            <span data-i18n="qr.dev_step2">在开发者工具中，设置编译模式：</span>
+            <div class="code-block mt-2">
+              <div><span data-i18n="qr.dev_page">页面路径:</span> <span style="color: #7ee787;">pages/bind/index</span></div>
+              <div><span data-i18n="qr.dev_params">启动参数:</span> <span style="color: #7ee787;" id="devSceneParam">scene=bt%3D<span style="color: var(--accent);">（等待生成...）</span></span></div>
+            </div>
+          </div>
+        </li>
+        <li class="flex gap-3">
+          <span class="font-black flex-shrink-0" style="color: var(--accent);">3.</span>
+          <span data-i18n="qr.dev_step3">点击编译，小程序将自动 绑定 → 跳转聊天页</span>
+        </li>
+      </ol>
+      <div class="mt-4 pt-4" style="border-top: 1px solid var(--border);">
+        <p class="text-xs" style="color: var(--text-4);" data-i18n="qr.dev_note">注：令牌有效期 30 分钟，过期请点击刷新二维码重新生成</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  var LANG = '{{ lang }}';
+  var TOKEN = "{{ token }}";
+  var t = {
+    zh: {
+      loading: '生成二维码中...', fail: '生成失败: ', net_err: '网络错误，请重试',
+      expired: '二维码已过期，请刷新', validity: '有效期: ',
+      copied: '已复制!', copy: '点击复制', generating: '生成二维码中...',
+      waiting: '（等待生成...）'
+    },
+    en: {
+      loading: 'Generating QR code...', fail: 'Generation failed: ', net_err: 'Network error, please retry',
+      expired: 'QR code expired, please refresh', validity: 'Valid for: ',
+      copied: 'Copied!', copy: 'Click to copy', generating: 'Generating QR code...',
+      waiting: '(generating...)'
+    }
+  };
+  var s = t[LANG] || t.zh;
+
+  // Apply static i18n
+  (function() {
+    if (LANG !== 'en') return;
+    document.title = 'Bind QR Code — ORCLAW';
+    var map = {
+      'qr.heading': 'Scan to bind your ORCLAW',
+      'qr.subheading': 'Open WeChat → Scan → Complete binding',
+      'qr.badge1': '1. Scan', 'qr.badge2': '2. Authorize', 'qr.badge3': '3. Start chatting',
+      'qr.loading': 'Loading QR code...',
+      'qr.fallback_title': 'Mini program not published',
+      'qr.fallback_desc': 'Contact admin for preview QR code',
+      'qr.refresh': 'Refresh QR code',
+      'qr.success_title': 'Binding successful!',
+      'qr.success_desc': 'Your ORCLAW is ready, start chatting now',
+      'qr.success_close': 'You can close this page',
+      'qr.token_label': 'Bind token (click to copy)',
+      'qr.copy': 'Click to copy',
+      'qr.instructions_title': 'Instructions',
+      'qr.inst1': 'Open WeChat, scan the QR code above',
+      'qr.inst2': 'Binding completes automatically in the mini program',
+      'qr.inst3': 'Start chatting with your AI assistant after binding',
+      'qr.expire_note': 'QR code expires in 30 minutes, click refresh if expired',
+      'qr.dev_title': '🛠 Developer Tools Testing',
+      'qr.dev_desc': 'Mini program not published yet, test in WeChat DevTools:',
+      'qr.dev_step1': 'Copy the bind token above',
+      'qr.dev_step2': 'In DevTools, set compile mode:',
+      'qr.dev_page': 'Page path:', 'qr.dev_params': 'Launch params:',
+      'qr.dev_step3': 'Click compile, mini program will auto bind → jump to chat',
+      'qr.dev_note': 'Note: Token expires in 30 minutes, click refresh QR to regenerate'
+    };
+    document.querySelectorAll('[data-i18n]').forEach(function(el) {
+      var key = el.getAttribute('data-i18n');
+      if (map[key]) el.textContent = map[key];
+    });
+  })();
+
+  var currentBindToken = "";
+  var countdownTimer = null;
+  var bindCheckTimer = null;
+  var isFallbackMode = false;
+
+  function generateQR() {
+    var loading = document.getElementById("qrLoading");
+    var img = document.getElementById("qrImage");
+    var fallback = document.getElementById("qrFallback");
+    loading.style.display = "flex";
+    loading.textContent = s.generating;
+    img.style.display = "none";
+    fallback.style.display = "none";
+
+    fetch("/api/purchase/qr/" + TOKEN, { method: "POST" })
+      .then(function(resp) {
+        if (!resp.ok) {
+          return resp.json().then(function(d) { throw new Error(d.error || "Server error " + resp.status); });
+        }
+        return resp.json();
+      })
+      .then(function(data) {
+        if (data.error) {
+          loading.textContent = s.fail + data.error;
+          return;
+        }
+
+        currentBindToken = data.bind_token || "";
+        isFallbackMode = data.is_fallback || false;
+
+        if (data.qr_image_base64) {
+          img.src = data.qr_image_base64;
+          img.style.display = "block";
+          loading.style.display = "none";
+        } else {
+          loading.style.display = "none";
+          fallback.style.display = "block";
+          document.getElementById("fallbackToken").textContent = "bind_token: " + (currentBindToken || "N/A");
+        }
+
+        if (currentBindToken) {
+          document.getElementById("tokenSection").style.display = "block";
+          document.getElementById("tokenValue").textContent = currentBindToken;
+          document.getElementById("copyHint").textContent = s.copy;
+          document.getElementById("tokenBox").classList.remove("copied");
+        }
+
+        if (isFallbackMode) {
+          document.getElementById("devInstructions").style.display = "block";
+          document.getElementById("prodInstructions").style.display = "none";
+          document.getElementById("devSceneParam").innerHTML =
+            'scene=bt%3D<span style="color: #79c0ff;">' + currentBindToken + '</span>';
+        } else {
+          document.getElementById("devInstructions").style.display = "none";
+          document.getElementById("prodInstructions").style.display = "block";
+        }
+
+        startCountdown(data.expires_in || 300);
+        startBindCheck();
+      })
+      .catch(function(e) {
+        loading.textContent = s.net_err;
+      });
+  }
+
+  function copyToken() {
+    if (!currentBindToken) return;
+    var box = document.getElementById("tokenBox");
+    var hint = document.getElementById("copyHint");
+
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(currentBindToken).then(function() {
+        box.classList.add("copied");
+        hint.textContent = s.copied;
+        setTimeout(function() { box.classList.remove("copied"); hint.textContent = s.copy; }, 2000);
+      });
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = currentBindToken;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      box.classList.add("copied");
+      hint.textContent = s.copied;
+      setTimeout(function() { box.classList.remove("copied"); hint.textContent = s.copy; }, 2000);
+    }
+  }
+
+  function startCountdown(seconds) {
+    clearInterval(countdownTimer);
+    var remaining = seconds;
+    var el = document.getElementById("countdownText");
+
+    function tick() {
+      if (remaining <= 0) {
+        el.textContent = s.expired;
+        clearInterval(countdownTimer);
+        return;
+      }
+      var m = Math.floor(remaining / 60);
+      var sec = remaining % 60;
+      el.textContent = s.validity + m + ":" + (sec < 10 ? "0" : "") + sec;
+      remaining--;
+    }
+
+    tick();
+    countdownTimer = setInterval(tick, 1000);
+  }
+
+  var bindErrorCount = 0;
+
+  function startBindCheck() {
+    clearInterval(bindCheckTimer);
+    bindErrorCount = 0;
+    if (!currentBindToken) return;
+
+    bindCheckTimer = setInterval(function() {
+      fetch("/api/purchase/bind-status/" + TOKEN + "?bind_token=" + currentBindToken)
+        .then(function(resp) {
+          if (!resp.ok) throw new Error("status " + resp.status);
+          return resp.json();
+        })
+        .then(function(data) {
+          bindErrorCount = 0;
+          if (data.status === "completed") {
+            clearInterval(bindCheckTimer);
+            clearInterval(countdownTimer);
+            document.getElementById("qrSection").style.display = "none";
+            document.getElementById("tokenSection").style.display = "none";
+            document.getElementById("successSection").style.display = "block";
+            document.getElementById("badge1").classList.add("active");
+            document.getElementById("badge2").classList.add("active");
+            document.getElementById("badge3").classList.add("active");
+          }
+        })
+        .catch(function() {
+          bindErrorCount++;
+          if (bindErrorCount >= 10) {
+            clearInterval(bindCheckTimer);
+            document.getElementById("countdownText").textContent =
+              LANG === 'en' ? 'Network error, please refresh QR' : '网络异常，请刷新二维码重试';
+          }
+        });
+    }, 3000);
+  }
+
+  generateQR();
+</script>
+{% endblock %}
