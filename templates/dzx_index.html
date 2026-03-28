@@ -1,632 +1,634 @@
 <!DOCTYPE html>
 <html class="dark" lang="zh">
 <head>
-  <meta charset="UTF-8"/>
-  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-  <title>大闸蟹 — AI 住进你的通讯软件</title>
+ <meta charset="UTF-8"/>
+ <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+ <title>大闸蟹 — AI 住进你的通讯软件</title>
 
-  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet"/>
-  <link href="https://fonts.loli.net/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+ <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+ <link rel="preconnect" href="https://fonts.googleapis.com"/>
+ <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+ <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow+Condensed:wght@700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+ <link href="https://fonts.loli.net/css2?family=Noto+Sans+SC:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 
-  <script id="tailwind-config">
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            "primary":                  "#f3ffca",
-            "primary-container":        "#cafd00",
-            "primary-fixed":            "#cafd00",
-            "primary-fixed-dim":        "#beee00",
-            "primary-dim":              "#beee00",
-            "on-primary":               "#516700",
-            "secondary":                "#00f4fe",
-            "secondary-dim":            "#00e5ee",
-            "secondary-container":      "#00696e",
-            "on-secondary":             "#00575b",
-            "on-secondary-container":   "#dffdff",
-            "surface":                  "#0e0e0e",
-            "surface-dim":              "#0e0e0e",
-            "surface-bright":           "#2c2c2c",
-            "surface-container-lowest": "#000000",
-            "surface-container-low":    "#131313",
-            "surface-container":        "#1a1919",
-            "surface-container-high":   "#201f1f",
-            "surface-container-highest":"#262626",
-            "background":               "#0e0e0e",
-            "on-background":            "#ffffff",
-            "on-surface":               "#ffffff",
-            "on-surface-variant":       "#adaaaa",
-            "outline":                  "#777575",
-            "outline-variant":          "#494847",
-            "inverse-surface":          "#fcf8f8",
-            "inverse-on-surface":       "#565554",
-          },
-          fontFamily: {
-            "headline": ["Inter","Noto Sans SC","sans-serif"],
-            "body":     ["Inter","Noto Sans SC","sans-serif"],
-            "label":    ["Manrope","Noto Sans SC","sans-serif"],
-          },
-          borderRadius: {
-            "DEFAULT": "0px",
-            "lg":  "0px",
-            "xl":  "0px",
-            "2xl": "0px",
-            "full":"9999px",
-          },
-        },
-      },
-    }
-  </script>
+ <script id="tailwind-config">
+ tailwind.config = {
+ darkMode: "class",
+ theme: {
+ extend: {
+ colors: {
+ "primary": "#f3ffca",
+ "primary-container": "#cafd00",
+ "primary-fixed": "#cafd00",
+ "primary-fixed-dim": "#beee00",
+ "primary-dim": "#beee00",
+ "on-primary": "#516700",
+ "secondary": "#00f4fe",
+ "secondary-dim": "#00e5ee",
+ "secondary-container": "#00696e",
+ "on-secondary": "#00575b",
+ "on-secondary-container": "#dffdff",
+ "surface": "#0e0e0e",
+ "surface-dim": "#0e0e0e",
+ "surface-bright": "#2c2c2c",
+ "surface-container-lowest": "#000000",
+ "surface-container-low": "#131313",
+ "surface-container": "#1a1919",
+ "surface-container-high": "#201f1f",
+ "surface-container-highest":"#262626",
+ "background": "#0e0e0e",
+ "on-background": "#ffffff",
+ "on-surface": "#ffffff",
+ "on-surface-variant": "#adaaaa",
+ "outline": "#777575",
+ "outline-variant": "#494847",
+ "inverse-surface": "#fcf8f8",
+ "inverse-on-surface": "#565554",
+ },
+ fontFamily: {
+ "headline": ["Bebas Neue","Barlow Condensed","Noto Sans SC","sans-serif"],
+ "body": ["Space Grotesk","Noto Sans SC","sans-serif"],
+ "label": ["Space Grotesk","Noto Sans SC","sans-serif"],
+ },
+ borderRadius: {
+ "DEFAULT": "0px",
+ "lg": "0px",
+ "xl": "0px",
+ "2xl": "0px",
+ "full":"9999px",
+ },
+ },
+ },
+ }
+ </script>
 
-  <style>
-    /* Shutter hover — center expand */
-    .shutter-effect { position:relative; overflow:hidden; }
-    .shutter-effect::after { content:''; position:absolute; top:0; left:50%; width:0; height:100%; background:rgba(0,244,254,0.07); transition:all 0.5s cubic-bezier(0.19,1,0.22,1); z-index:0; }
-    .shutter-effect:hover::after { left:0; width:100%; }
-    .shutter-effect > * { position:relative; z-index:1; }
+ <style>
+ * { font-family: 'Space Grotesk','Noto Sans SC',sans-serif; }
 
-    /* Shutter for buttons */
-    .shutter-btn { position:relative; overflow:hidden; }
-    .shutter-btn::after { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,244,254,0.12); transform:scaleY(0); transform-origin:center; transition:transform 0.5s cubic-bezier(0.19,1,0.22,1); z-index:0; }
-    .shutter-btn:hover::after { transform:scaleY(1); }
-    .shutter-btn > * { position:relative; z-index:1; }
+ /* Shutter hover — center expand */
+ .shutter-effect { position:relative; overflow:hidden; }
+ .shutter-effect::after { content:''; position:absolute; top:0; left:50%; width:0; height:100%; background:rgba(0,244,254,0.07); transition:all 0.5s cubic-bezier(0.19,1,0.22,1); z-index:0; }
+ .shutter-effect:hover::after { left:0; width:100%; }
+ .shutter-effect > * { position:relative; z-index:1; }
 
-    .glass-glow-cyan { box-shadow:0px 12px 64px rgba(0,244,254,0.06); }
-    .glass-glow-lime { box-shadow:0px 12px 64px rgba(243,255,202,0.06); }
+ /* Shutter for buttons */
+ .shutter-btn { position:relative; overflow:hidden; }
+ .shutter-btn::after { content:''; position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,244,254,0.12); transform:scaleY(0); transform-origin:center; transition:transform 0.5s cubic-bezier(0.19,1,0.22,1); z-index:0; }
+ .shutter-btn:hover::after { transform:scaleY(1); }
+ .shutter-btn > * { position:relative; z-index:1; }
 
-    /* Scroll reveal */
-    .reveal { opacity:0; transform:translateY(20px); transition:opacity 0.7s ease, transform 0.7s ease; }
-    .reveal.visible { opacity:1; transform:translateY(0); }
+ .glass-glow-cyan { box-shadow:0px 12px 64px rgba(0,244,254,0.06); }
+ .glass-glow-lime { box-shadow:0px 12px 64px rgba(243,255,202,0.06); }
 
-    /* Mobile drawer */
-    #mobile-menu { transform:translateX(100%); transition:transform 0.35s ease; }
-    #mobile-menu.open { transform:translateX(0); }
+ /* Scroll reveal */
+ .reveal { opacity:0; transform:translateY(20px); transition:opacity 0.7s ease, transform 0.7s ease; }
+ .reveal.visible { opacity:1; transform:translateY(0); }
 
-    /* Scanline */
-    @keyframes scanline { 0% { transform:translateY(-100%); } 100% { transform:translateY(200%); } }
-    .scanline-wrap { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
-    .scanline { position:absolute; left:0; right:0; height:2px; background:linear-gradient(to bottom, transparent, rgba(0,244,254,0.04), transparent); animation:scanline 8s linear infinite; }
+ /* Mobile drawer */
+ #mobile-menu { transform:translateX(100%); transition:transform 0.35s ease; }
+ #mobile-menu.open { transform:translateX(0); }
 
-    /* Marquee */
-    @keyframes marquee { from { transform:translateX(0); } to { transform:translateX(-50%); } }
-    .marquee-track { display:flex; width:max-content; animation:marquee 36s linear infinite; }
-    .marquee-wrap { overflow:hidden; }
-    .marquee-wrap:hover .marquee-track { animation-play-state:paused; }
+ /* Scanline */
+ @keyframes scanline { 0% { transform:translateY(-100%); } 100% { transform:translateY(200%); } }
+ .scanline-wrap { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:1; }
+ .scanline { position:absolute; left:0; right:0; height:2px; background:linear-gradient(to bottom, transparent, rgba(0,244,254,0.04), transparent); animation:scanline 8s linear infinite; }
 
-    /* Lime gradient text */
-    .text-lime-gradient { background:linear-gradient(135deg,#f3ffca 0%,#cafd00 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+ /* Marquee */
+ @keyframes marquee { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+ .marquee-track { display:flex; width:max-content; animation:marquee 36s linear infinite; }
+ .marquee-wrap { overflow:hidden; }
+ .marquee-wrap:hover .marquee-track { animation-play-state:paused; }
 
-    /* Neon glow */
-    .text-glow-cyan { text-shadow:0 0 20px rgba(0,244,254,0.5),0 0 60px rgba(0,244,254,0.2); }
+ /* Lime gradient text */
+ .text-lime-gradient { background:linear-gradient(135deg,#f3ffca 0%,#cafd00 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
 
-    /* Compare zebra */
-    .compare-row:nth-child(even) { background:#131313; }
+ /* Neon glow */
+ .text-glow-cyan { text-shadow:0 0 20px rgba(0,244,254,0.5),0 0 60px rgba(0,244,254,0.2); }
 
-    /* Mobile hero fixes */
-    @media (max-width:767px) {
-      .hero-h1 { font-size: clamp(3rem,16vw,5rem) !important; }
-    }
+ /* Compare zebra */
+ .compare-row:nth-child(even) { background:#131313; }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width:3px; }
-    ::-webkit-scrollbar-track { background:#0e0e0e; }
-    ::-webkit-scrollbar-thumb { background:#262626; }
-    ::-webkit-scrollbar-thumb:hover { background:#00f4fe; }
-  </style>
+ /* Mobile hero fixes */
+ @media (max-width:767px) {
+ .hero-h1 { font-size: clamp(3rem,16vw,5rem) !important; }
+ }
+
+ /* Scrollbar */
+ ::-webkit-scrollbar { width:3px; }
+ ::-webkit-scrollbar-track { background:#0e0e0e; }
+ ::-webkit-scrollbar-thumb { background:#262626; }
+ ::-webkit-scrollbar-thumb:hover { background:#00f4fe; }
+ </style>
 </head>
 <body class="bg-background text-on-background font-body selection:bg-secondary selection:text-on-secondary overflow-x-hidden">
 
-  <!-- ══════════════════════════════════════════════════════════
-       NAVBAR
-  ═════════════════════════════════════════════════════════════→ -->
-  <nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-10 py-3 bg-[#050505]/85 backdrop-blur-xl border-b-[0.5px] border-[#00f4fe]/25 glass-glow-cyan">
-    <a href="#" class="font-headline text-xl font-light italic text-slate-100 tracking-tighter select-none">大闸蟹</a>
+ <!-- ══════════════════════════════════════════════════════════
+ NAVBAR
+ ═════════════════════════════════════════════════════════════→ -->
+ <nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 md:px-10 py-3 bg-[#050505]/85 backdrop-blur-xl border-b-[0.5px] border-[#00f4fe]/25 glass-glow-cyan">
+ <a href="#" class="font-headline text-xl font-light text-slate-100 tracking-tighter select-none">大闸蟹</a>
 
-    <div class="hidden md:flex items-center gap-10">
-      <a href="#scenarios" class="font-label text-[11px] tracking-[0.22em] text-slate-400 uppercase hover:text-secondary transition-all duration-400" data-i18n="nav.usecases">使用场景</a>
-      <a href="#features"  class="font-label text-[11px] tracking-[0.22em] text-slate-400 uppercase hover:text-secondary transition-all duration-400" data-i18n="nav.features">功能</a>
-      <a href="#pricing"   class="font-label text-[11px] tracking-[0.22em] text-secondary border-b border-secondary/60 uppercase" data-i18n="nav.pricing">方案</a>
-      <a href="/guide"     class="font-label text-[11px] tracking-[0.22em] text-slate-400 uppercase hover:text-secondary transition-all duration-400" data-i18n="nav.guide">使用教程</a>
-      <a href="/faq"       class="font-label text-[11px] tracking-[0.22em] text-slate-400 uppercase hover:text-secondary transition-all duration-400" data-i18n="nav.faq">常见问题</a>
-    </div>
+ <div class="hidden md:flex items-center gap-10">
+ <a href="#scenarios" class="font-label text-[11px] tracking-[0.22em] text-slate-400 uppercase hover:text-secondary transition-all duration-400" data-i18n="nav.usecases">使用场景</a>
+ <a href="#features" class="font-label text-[11px] tracking-[0.22em] text-slate-400 uppercase hover:text-secondary transition-all duration-400" data-i18n="nav.features">功能</a>
+ <a href="#pricing" class="font-label text-[11px] tracking-[0.22em] text-secondary border-b border-secondary/60 uppercase" data-i18n="nav.pricing">方案</a>
+ <a href="/guide" class="font-label text-[11px] tracking-[0.22em] text-slate-400 uppercase hover:text-secondary transition-all duration-400" data-i18n="nav.guide">使用教程</a>
+ <a href="/faq" class="font-label text-[11px] tracking-[0.22em] text-slate-400 uppercase hover:text-secondary transition-all duration-400" data-i18n="nav.faq">常见问题</a>
+ </div>
 
-    <div class="hidden md:flex items-center gap-3">
-      <a href="/recharge" class="px-5 py-2 border-[0.5px] border-secondary/50 text-secondary font-label text-[10px] tracking-[0.25em] uppercase hover:bg-secondary/10 transition-all duration-400" data-i18n="nav.recharge">余额充值</a>
-      <a href="#pricing"  class="px-6 py-2 bg-secondary text-on-secondary font-label text-[10px] tracking-[0.25em] font-bold uppercase hover:shadow-[0_0_20px_rgba(0,244,254,0.5)] active:scale-95 transition-all duration-400" data-i18n="nav.cta">查看方案 ↗</a>
-    </div>
+ <div class="hidden md:flex items-center gap-3">
+ <a href="/recharge" class="px-5 py-2 border-[0.5px] border-secondary/50 text-secondary font-label text-[10px] tracking-[0.25em] uppercase hover:bg-secondary/10 transition-all duration-400" data-i18n="nav.recharge">余额充值</a>
+ <a href="#pricing" class="px-6 py-2 bg-secondary text-on-secondary font-label text-[10px] tracking-[0.25em] font-bold uppercase hover:shadow-[0_0_20px_rgba(0,244,254,0.5)] active:scale-95 transition-all duration-400" data-i18n="nav.cta">查看方案 ↗</a>
+ </div>
 
-    <button id="hamburger-btn" class="md:hidden p-2 text-secondary" aria-label="Menu">
-      <svg id="icon-hamburger" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
-      <svg id="icon-close" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
-    </button>
-  </nav>
+ <button id="hamburger-btn" class="md:hidden p-2 text-secondary" aria-label="Menu">
+ <svg id="icon-hamburger" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/></svg>
+ <svg id="icon-close" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/></svg>
+ </button>
+ </nav>
 
-  <!-- Mobile Drawer -->
-  <div id="mobile-menu" class="fixed top-0 right-0 bottom-0 w-72 bg-surface-container-lowest z-40 flex flex-col pt-20 px-8 pb-8 border-l-[0.5px] border-outline-variant/30">
-    <nav class="flex flex-col gap-1 font-label text-sm tracking-[0.18em] uppercase text-slate-400">
-      <a href="#scenarios" class="mobile-link py-4 border-b-[0.5px] border-outline-variant/20 hover:text-secondary transition-colors" data-i18n="nav.usecases">使用场景</a>
-      <a href="#features"  class="mobile-link py-4 border-b-[0.5px] border-outline-variant/20 hover:text-secondary transition-colors" data-i18n="nav.features">功能</a>
-      <a href="#pricing"   class="mobile-link py-4 border-b-[0.5px] border-outline-variant/20 text-secondary" data-i18n="nav.pricing">方案</a>
-      <a href="/guide"     class="mobile-link py-4 border-b-[0.5px] border-outline-variant/20 hover:text-secondary transition-colors" data-i18n="nav.guide">使用教程</a>
-      <a href="/faq"       class="mobile-link py-4 border-b-[0.5px] border-outline-variant/20 hover:text-secondary transition-colors" data-i18n="nav.faq">常见问题</a>
-    </nav>
-    <div class="mt-8 flex flex-col gap-3">
-      <a href="/recharge" class="w-full text-center py-3 border-[0.5px] border-secondary/50 text-secondary font-label text-[10px] tracking-[0.25em] uppercase hover:bg-secondary/10 transition-all" data-i18n="nav.recharge">余额充值</a>
-      <a href="#pricing"  class="w-full text-center py-3 bg-secondary text-on-secondary font-label text-[10px] tracking-[0.25em] font-bold uppercase" data-i18n="nav.cta">查看方案 ↗</a>
-    </div>
-  </div>
-  <div id="drawer-overlay" class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
+ <!-- Mobile Drawer -->
+ <div id="mobile-menu" class="fixed top-0 right-0 bottom-0 w-72 bg-surface-container-lowest z-40 flex flex-col pt-20 px-8 pb-8 border-l-[0.5px] border-outline-variant/30">
+ <nav class="flex flex-col gap-1 font-label text-sm tracking-[0.18em] uppercase text-slate-400">
+ <a href="#scenarios" class="mobile-link py-4 border-b-[0.5px] border-outline-variant/20 hover:text-secondary transition-colors" data-i18n="nav.usecases">使用场景</a>
+ <a href="#features" class="mobile-link py-4 border-b-[0.5px] border-outline-variant/20 hover:text-secondary transition-colors" data-i18n="nav.features">功能</a>
+ <a href="#pricing" class="mobile-link py-4 border-b-[0.5px] border-outline-variant/20 text-secondary" data-i18n="nav.pricing">方案</a>
+ <a href="/guide" class="mobile-link py-4 border-b-[0.5px] border-outline-variant/20 hover:text-secondary transition-colors" data-i18n="nav.guide">使用教程</a>
+ <a href="/faq" class="mobile-link py-4 border-b-[0.5px] border-outline-variant/20 hover:text-secondary transition-colors" data-i18n="nav.faq">常见问题</a>
+ </nav>
+ <div class="mt-8 flex flex-col gap-3">
+ <a href="/recharge" class="w-full text-center py-3 border-[0.5px] border-secondary/50 text-secondary font-label text-[10px] tracking-[0.25em] uppercase hover:bg-secondary/10 transition-all" data-i18n="nav.recharge">余额充值</a>
+ <a href="#pricing" class="w-full text-center py-3 bg-secondary text-on-secondary font-label text-[10px] tracking-[0.25em] font-bold uppercase" data-i18n="nav.cta">查看方案 ↗</a>
+ </div>
+ </div>
+ <div id="drawer-overlay" class="hidden fixed inset-0 bg-black/60 z-30 md:hidden"></div>
 
-  <main class="pt-16">
+ <main class="pt-16">
 
-    <!-- ══════════════════════════════════════════════════════════
-         HERO
-    ═══════════════════════════════════════════════════════════→ -->
-    <section class="relative min-h-screen flex items-center px-6 md:px-16 overflow-hidden bg-surface-container-lowest">
-      <div class="scanline-wrap"><div class="scanline"></div></div>
+ <!-- ══════════════════════════════════════════════════════════
+ HERO
+ ═══════════════════════════════════════════════════════════→ -->
+ <section class="relative min-h-screen flex items-center px-6 md:px-16 overflow-hidden bg-surface-container-lowest">
+ <div class="scanline-wrap"><div class="scanline"></div></div>
 
-      <!-- Grid lines -->
-      <div class="absolute inset-0 pointer-events-none" style="background-image:linear-gradient(rgba(0,244,254,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,244,254,0.025) 1px,transparent 1px);background-size:80px 80px;"></div>
+ <!-- Grid lines -->
+ <div class="absolute inset-0 pointer-events-none" style="background-image:linear-gradient(rgba(0,244,254,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,244,254,0.025) 1px,transparent 1px);background-size:80px 80px;"></div>
 
-      <!-- Ambient orbs -->
-      <div class="absolute top-0 right-0 w-[500px] h-[500px] pointer-events-none" style="background:radial-gradient(circle,rgba(0,244,254,0.07) 0%,transparent 65%);"></div>
-      <div class="absolute bottom-0 left-1/4 w-[400px] h-[400px] pointer-events-none" style="background:radial-gradient(circle,rgba(202,253,0,0.05) 0%,transparent 65%);"></div>
+ <!-- Ambient orbs -->
+ <div class="absolute top-0 right-0 w-[500px] h-[500px] pointer-events-none" style="background:radial-gradient(circle,rgba(0,244,254,0.07) 0%,transparent 65%);"></div>
+ <div class="absolute bottom-0 left-1/4 w-[400px] h-[400px] pointer-events-none" style="background:radial-gradient(circle,rgba(202,253,0,0.05) 0%,transparent 65%);"></div>
 
-      <div class="max-w-[1400px] mx-auto w-full grid grid-cols-12 gap-8 py-24 relative z-10">
+ <div class="max-w-[1400px] mx-auto w-full grid grid-cols-12 gap-8 py-24 relative z-10">
 
-        <!-- Left: massive headline -->
-        <div class="col-span-12 lg:col-span-8">
-          <div class="font-label text-secondary text-[10px] tracking-[0.45em] uppercase mb-8 opacity-80">AI AGENT · 云端部署 · 24/7</div>
+ <!-- Left: massive headline -->
+ <div class="col-span-12 lg:col-span-8">
+ <div class="font-label text-secondary text-[10px] tracking-[0.45em] uppercase mb-8 opacity-80">AI AGENT · 云端部署 · 24/7</div>
 
-          <h1 class="hero-h1 font-headline font-black leading-[0.88] tracking-[-0.03em] text-on-background mb-10"
-              style="font-size:clamp(3.5rem,10vw,9.5rem);">
-            风浪越大，<br/>
-            <span class="text-lime-gradient not-italic font-light">鱼越贵。</span>
-          </h1>
+ <h1 class="hero-h1 font-headline font-black leading-[0.88] tracking-[-0.03em] text-on-background mb-10"
+ style="font-size:clamp(3.5rem,10vw,9.5rem);">
+ 风浪越大，<br/>
+ <span class="text-lime-gradient not- font-light">鱼越贵。</span>
+ </h1>
 
-          <p class="font-body text-lg md:text-xl text-on-surface-variant font-light leading-relaxed mb-12"
-             style="margin-left:clamp(0px,8.333%,120px);max-width:36rem;">
-            大闸蟹满足您的云端安全需求。<br class="hidden md:block"/>
-            专属 AI，住进你的通讯软件，随传随到。
-          </p>
+ <p class="font-body text-lg md:text-xl text-on-surface-variant font-light leading-relaxed mb-12"
+ style="margin-left:clamp(0px,8.333%,120px);max-width:36rem;">
+ 大闸蟹满足您的云端安全需求。<br class="hidden md:block"/>
+ 专属 AI，住进你的通讯软件，随传随到。
+ </p>
 
-          <div class="flex flex-wrap gap-4">
-            <a href="#pricing" class="shutter-btn px-8 md:px-10 py-4 bg-secondary text-on-secondary font-label text-[10px] tracking-[0.3em] uppercase font-bold hover:shadow-[0_0_30px_rgba(0,244,254,0.4)] active:scale-95 transition-all duration-400">
-              <span data-i18n="hero.cta1">立即部署 ↗</span>
-            </a>
-            <a href="#scenarios" class="shutter-btn px-8 md:px-10 py-4 border-[0.5px] border-secondary/40 text-secondary font-label text-[10px] tracking-[0.3em] uppercase hover:border-secondary transition-all duration-400">
-              <span data-i18n="hero.cta2">查看能做什么</span>
-            </a>
-          </div>
-        </div>
+ <div class="flex flex-wrap gap-4">
+ <a href="#pricing" class="shutter-btn px-8 md:px-10 py-4 bg-secondary text-on-secondary font-label text-[10px] tracking-[0.3em] uppercase font-bold hover:shadow-[0_0_30px_rgba(0,244,254,0.4)] active:scale-95 transition-all duration-400">
+ <span data-i18n="hero.cta1">立即部署 ↗</span>
+ </a>
+ <a href="#scenarios" class="shutter-btn px-8 md:px-10 py-4 border-[0.5px] border-secondary/40 text-secondary font-label text-[10px] tracking-[0.3em] uppercase hover:border-secondary transition-all duration-400">
+ <span data-i18n="hero.cta2">查看能做什么</span>
+ </a>
+ </div>
+ </div>
 
-        <!-- Right: stat cards (desktop only) -->
-        <div class="hidden lg:flex col-span-4 flex-col justify-center gap-4 pt-20">
-          <div class="border-[0.5px] border-secondary/20 bg-surface-container p-6 glass-glow-cyan shutter-effect">
-            <div class="font-label text-[9px] tracking-[0.4em] text-outline uppercase mb-4">// UPTIME</div>
-            <div class="font-headline text-5xl italic text-secondary mb-1">24/7</div>
-            <div class="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">持续云端运行</div>
-            <div class="mt-4 h-px bg-gradient-to-r from-secondary/40 to-transparent"></div>
-          </div>
-          <div class="border-[0.5px] border-primary/20 bg-surface-container p-6 glass-glow-lime shutter-effect" style="margin-left:2rem;">
-            <div class="font-label text-[9px] tracking-[0.4em] text-outline uppercase mb-4">// SKILLS</div>
-            <div class="font-headline text-5xl italic text-primary mb-1">9+</div>
-            <div class="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">开箱即用</div>
-            <div class="mt-4 h-px bg-gradient-to-r from-primary/40 to-transparent"></div>
-          </div>
-          <div class="border-[0.5px] border-secondary/20 bg-surface-container p-6 glass-glow-cyan shutter-effect">
-            <div class="font-label text-[9px] tracking-[0.4em] text-outline uppercase mb-4">// DEPLOY</div>
-            <div class="font-headline text-4xl italic text-secondary mb-1">10<span class="text-xl text-on-surface-variant ml-1">min</span></div>
-            <div class="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">付款即自动完成</div>
-            <div class="mt-4 h-px bg-gradient-to-r from-secondary/40 to-transparent"></div>
-          </div>
-        </div>
-      </div>
+ <!-- Right: stat cards (desktop only) -->
+ <div class="hidden lg:flex col-span-4 flex-col justify-center gap-4 pt-20">
+ <div class="border-[0.5px] border-secondary/20 bg-surface-container p-6 glass-glow-cyan shutter-effect">
+ <div class="font-label text-[9px] tracking-[0.4em] text-outline uppercase mb-4">// UPTIME</div>
+ <div class="font-headline text-5xl text-secondary mb-1">24/7</div>
+ <div class="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">持续云端运行</div>
+ <div class="mt-4 h-px bg-gradient-to-r from-secondary/40 to-transparent"></div>
+ </div>
+ <div class="border-[0.5px] border-primary/20 bg-surface-container p-6 glass-glow-lime shutter-effect" style="margin-left:2rem;">
+ <div class="font-label text-[9px] tracking-[0.4em] text-outline uppercase mb-4">// SKILLS</div>
+ <div class="font-headline text-5xl text-primary mb-1">9+</div>
+ <div class="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">开箱即用</div>
+ <div class="mt-4 h-px bg-gradient-to-r from-primary/40 to-transparent"></div>
+ </div>
+ <div class="border-[0.5px] border-secondary/20 bg-surface-container p-6 glass-glow-cyan shutter-effect">
+ <div class="font-label text-[9px] tracking-[0.4em] text-outline uppercase mb-4">// DEPLOY</div>
+ <div class="font-headline text-4xl text-secondary mb-1">10<span class="text-xl text-on-surface-variant ml-1">min</span></div>
+ <div class="font-label text-[10px] tracking-widest text-on-surface-variant uppercase">付款即自动完成</div>
+ <div class="mt-4 h-px bg-gradient-to-r from-secondary/40 to-transparent"></div>
+ </div>
+ </div>
+ </div>
 
-      <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-secondary/30 to-transparent"></div>
-    </section>
+ <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-secondary/30 to-transparent"></div>
+ </section>
 
-    <!-- Marquee -->
-    <div class="bg-surface-container-low py-4 border-b-[0.5px] border-outline-variant/20 overflow-hidden">
-      <div class="marquee-wrap">
-        <div class="marquee-track" id="marquee-track"></div>
-      </div>
-    </div>
+ <!-- Marquee -->
+ <div class="bg-surface-container-low py-4 border-b-[0.5px] border-outline-variant/20 overflow-hidden">
+ <div class="marquee-wrap">
+ <div class="marquee-track" id="marquee-track"></div>
+ </div>
+ </div>
 
-    <!-- ══════════════════════════════════════════════════════════
-         WHAT IS
-    ═══════════════════════════════════════════════════════════→ -->
-    <section id="whatIs" class="py-32 px-6 md:px-16 bg-surface">
-      <div class="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
+ <!-- ══════════════════════════════════════════════════════════
+ WHAT IS
+ ═══════════════════════════════════════════════════════════→ -->
+ <section id="whatIs" class="py-32 px-6 md:px-16 bg-surface">
+ <div class="max-w-[1400px] mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 items-start">
 
-        <div class="md:col-span-4 md:sticky top-28">
-          <span class="font-label text-[9px] tracking-[0.5em] text-outline uppercase block mb-4">// CHAPTER 01</span>
-          <h2 class="font-headline text-5xl font-light leading-none mb-4" data-i18n="whatIs.h2.line1">什么是</h2>
-          <h2 class="font-headline text-5xl font-light italic leading-none mb-8 text-secondary" data-i18n="whatIs.h2.line2">大闸蟹。</h2>
-          <div class="h-px w-24 bg-secondary/40"></div>
-        </div>
+ <div class="md:col-span-4 md:sticky top-28">
+ <span class="font-label text-[9px] tracking-[0.5em] text-outline uppercase block mb-4">// CHAPTER 01</span>
+ <h2 class="font-headline text-5xl font-light leading-none mb-4" data-i18n="whatIs.h2.line1">什么是</h2>
+ <h2 class="font-headline text-5xl font-light leading-none mb-8 text-secondary" data-i18n="whatIs.h2.line2">大闸蟹。</h2>
+ <div class="h-px w-24 bg-secondary/40"></div>
+ </div>
 
-        <div class="md:col-span-7 md:col-start-6 space-y-0">
-          <p class="font-body text-xl font-light leading-relaxed text-on-surface-variant mb-12 reveal" data-i18n="whatIs.sub">
-            大闸蟹把 AI 安装在云端服务器，绑定你的通讯软件。从此，随时发一句话，事情就做完了。
-          </p>
-          <div class="border-t-[0.5px] border-outline-variant/20">
-            <div class="flex gap-8 py-8 border-b-[0.5px] border-outline-variant/20 shutter-effect reveal">
-              <span class="font-headline text-4xl italic text-secondary/25 leading-none flex-shrink-0 w-12">01</span>
-              <div><h3 class="font-label text-sm tracking-widest uppercase text-on-surface mb-3" data-i18n="whatIs.01.title">住在通讯软件里面</h3><p class="font-body text-on-surface-variant leading-relaxed" data-i18n="whatIs.01.desc">你最常开的 App 就是你的 AI 入口。不用下载新 App，不用记得另一个网址。</p></div>
-            </div>
-            <div class="flex gap-8 py-8 border-b-[0.5px] border-outline-variant/20 shutter-effect reveal">
-              <span class="font-headline text-4xl italic text-secondary/25 leading-none flex-shrink-0 w-12">02</span>
-              <div><h3 class="font-label text-sm tracking-widest uppercase text-on-surface mb-3" data-i18n="whatIs.02.title">记得你</h3><p class="font-body text-on-surface-variant leading-relaxed" data-i18n="whatIs.02.desc">有长期记忆，知道你的偏好、习惯、常用指令。每次对话都更懂你。</p></div>
-            </div>
-            <div class="flex gap-8 py-8 border-b-[0.5px] border-outline-variant/20 shutter-effect reveal">
-              <span class="font-headline text-4xl italic text-secondary/25 leading-none flex-shrink-0 w-12">03</span>
-              <div><h3 class="font-label text-sm tracking-widest uppercase text-on-surface mb-3" data-i18n="whatIs.03.title">24/7 在跑</h3><p class="font-body text-on-surface-variant leading-relaxed" data-i18n="whatIs.03.desc">你睡觉它也在运作。设定好的定时推送、价格警报，一条都不漏。</p></div>
-            </div>
-            <div class="flex gap-8 py-8 border-b-[0.5px] border-outline-variant/20 shutter-effect reveal">
-              <span class="font-headline text-4xl italic text-secondary/25 leading-none flex-shrink-0 w-12">04</span>
-              <div><h3 class="font-label text-sm tracking-widest uppercase text-on-surface mb-3" data-i18n="whatIs.04.title">主动出击</h3><p class="font-body text-on-surface-variant leading-relaxed" data-i18n="whatIs.04.desc">不用你去找它。设定条件，它主动在正确时机推送消息到你的通讯软件。</p></div>
-            </div>
-            <div class="flex gap-8 py-8 shutter-effect reveal">
-              <span class="font-headline text-4xl italic text-secondary/25 leading-none flex-shrink-0 w-12">05</span>
-              <div><h3 class="font-label text-sm tracking-widest uppercase text-on-surface mb-3" data-i18n="whatIs.05.title">自选 AI 模型</h3><p class="font-body text-on-surface-variant leading-relaxed" data-i18n="whatIs.05.desc">不被任何平台绑定。自带 API Key，随时切换 GPT-4o、Claude、Gemini 等模型。</p></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+ <div class="md:col-span-7 md:col-start-6 space-y-0">
+ <p class="font-body text-xl font-light leading-relaxed text-on-surface-variant mb-12 reveal" data-i18n="whatIs.sub">
+ 大闸蟹把 AI 安装在云端服务器，绑定你的通讯软件。从此，随时发一句话，事情就做完了。
+ </p>
+ <div class="border-t-[0.5px] border-outline-variant/20">
+ <div class="flex gap-8 py-8 border-b-[0.5px] border-outline-variant/20 shutter-effect reveal">
+ <span class="font-headline text-4xl text-secondary/25 leading-none flex-shrink-0 w-12">01</span>
+ <div><h3 class="font-label text-sm tracking-widest uppercase text-on-surface mb-3" data-i18n="whatIs.01.title">住在通讯软件里面</h3><p class="font-body text-on-surface-variant leading-relaxed" data-i18n="whatIs.01.desc">你最常开的 App 就是你的 AI 入口。不用下载新 App，不用记得另一个网址。</p></div>
+ </div>
+ <div class="flex gap-8 py-8 border-b-[0.5px] border-outline-variant/20 shutter-effect reveal">
+ <span class="font-headline text-4xl text-secondary/25 leading-none flex-shrink-0 w-12">02</span>
+ <div><h3 class="font-label text-sm tracking-widest uppercase text-on-surface mb-3" data-i18n="whatIs.02.title">记得你</h3><p class="font-body text-on-surface-variant leading-relaxed" data-i18n="whatIs.02.desc">有长期记忆，知道你的偏好、习惯、常用指令。每次对话都更懂你。</p></div>
+ </div>
+ <div class="flex gap-8 py-8 border-b-[0.5px] border-outline-variant/20 shutter-effect reveal">
+ <span class="font-headline text-4xl text-secondary/25 leading-none flex-shrink-0 w-12">03</span>
+ <div><h3 class="font-label text-sm tracking-widest uppercase text-on-surface mb-3" data-i18n="whatIs.03.title">24/7 在跑</h3><p class="font-body text-on-surface-variant leading-relaxed" data-i18n="whatIs.03.desc">你睡觉它也在运作。设定好的定时推送、价格警报，一条都不漏。</p></div>
+ </div>
+ <div class="flex gap-8 py-8 border-b-[0.5px] border-outline-variant/20 shutter-effect reveal">
+ <span class="font-headline text-4xl text-secondary/25 leading-none flex-shrink-0 w-12">04</span>
+ <div><h3 class="font-label text-sm tracking-widest uppercase text-on-surface mb-3" data-i18n="whatIs.04.title">主动出击</h3><p class="font-body text-on-surface-variant leading-relaxed" data-i18n="whatIs.04.desc">不用你去找它。设定条件，它主动在正确时机推送消息到你的通讯软件。</p></div>
+ </div>
+ <div class="flex gap-8 py-8 shutter-effect reveal">
+ <span class="font-headline text-4xl text-secondary/25 leading-none flex-shrink-0 w-12">05</span>
+ <div><h3 class="font-label text-sm tracking-widest uppercase text-on-surface mb-3" data-i18n="whatIs.05.title">自选 AI 模型</h3><p class="font-body text-on-surface-variant leading-relaxed" data-i18n="whatIs.05.desc">不被任何平台绑定。自带 API Key，随时切换 GPT-4o、Claude、Gemini 等模型。</p></div>
+ </div>
+ </div>
+ </div>
+ </div>
+ </section>
 
-    <!-- Quote -->
-    <section class="py-24 bg-surface-container-low border-y-[0.5px] border-outline-variant/20">
-      <div class="max-w-[1400px] mx-auto px-6 md:px-16">
-        <div class="grid grid-cols-1 md:grid-cols-12">
-          <div class="md:col-span-9 md:col-start-2">
-            <blockquote class="font-headline text-3xl md:text-6xl font-extralight italic leading-[1.15] text-on-background reveal">
-              "不是哪个 AI 更聪明的问题——是大闸蟹 <span class="text-secondary">24 小时住在你的云端</span>，主动出击；DeepSeek 等你去找它。"
-            </blockquote>
-            <cite class="block mt-8 font-label text-[10px] tracking-[0.35em] text-outline uppercase">— 大闸蟹 核心设计理念</cite>
-          </div>
-        </div>
-      </div>
-    </section>
+ <!-- Quote -->
+ <section class="py-24 bg-surface-container-low border-y-[0.5px] border-outline-variant/20">
+ <div class="max-w-[1400px] mx-auto px-6 md:px-16">
+ <div class="grid grid-cols-1 md:grid-cols-12">
+ <div class="md:col-span-9 md:col-start-2">
+ <blockquote class="font-headline text-3xl md:text-6xl font-extralight leading-[1.15] text-on-background reveal">
+ "不是哪个 AI 更聪明的问题——是大闸蟹 <span class="text-secondary">24 小时住在你的云端</span>，主动出击；DeepSeek 等你去找它。"
+ </blockquote>
+ <cite class="block mt-8 font-label text-[10px] tracking-[0.35em] text-outline uppercase">— 大闸蟹 核心设计理念</cite>
+ </div>
+ </div>
+ </div>
+ </section>
 
-    <!-- ══════════════════════════════════════════════════════════
-         SCENARIOS — Bento
-    ═══════════════════════════════════════════════════════════→ -->
-    <section id="scenarios" class="py-32 px-6 md:px-16 bg-surface">
-      <div class="max-w-[1400px] mx-auto">
-        <div class="mb-16 reveal">
-          <span class="font-label text-[10px] tracking-[0.4em] text-secondary uppercase block mb-4">// 非大闸蟹不可</span>
-          <h2 class="font-headline font-light italic leading-none mb-1" style="font-size:clamp(2.5rem,7vw,5.5rem);">DeepSeek</h2>
-          <h2 class="font-headline font-light leading-none" style="font-size:clamp(2.5rem,7vw,5.5rem);">做<span class="text-secondary italic">不到</span>这些。</h2>
-          <div class="h-[2px] w-20 bg-secondary mt-8"></div>
-        </div>
+ <!-- ══════════════════════════════════════════════════════════
+ SCENARIOS — Bento
+ ═══════════════════════════════════════════════════════════→ -->
+ <section id="scenarios" class="py-32 px-6 md:px-16 bg-surface">
+ <div class="max-w-[1400px] mx-auto">
+ <div class="mb-16 reveal">
+ <span class="font-label text-[10px] tracking-[0.4em] text-secondary uppercase block mb-4">// 非大闸蟹不可</span>
+ <h2 class="font-headline font-light leading-none mb-1" style="font-size:clamp(2.5rem,7vw,5.5rem);">DeepSeek</h2>
+ <h2 class="font-headline font-light leading-none" style="font-size:clamp(2.5rem,7vw,5.5rem);">做<span class="text-secondary ">不到</span>这些。</h2>
+ <div class="h-[2px] w-20 bg-secondary mt-8"></div>
+ </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-0 border-l-[0.5px] border-[#00f4fe]/10">
-          <div class="shutter-effect md:col-span-2 md:row-span-2 bg-surface-container-high p-10 border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 flex flex-col justify-end reveal" style="min-height:280px;">
-            <span class="font-label text-secondary text-[10px] tracking-widest mb-4 block">01</span>
-            <h3 class="font-headline text-2xl md:text-3xl mb-4" data-i18n="scenario.01.title">早上八点，自动送早报</h3>
-            <p class="font-body text-on-surface-variant text-sm leading-relaxed mb-6" data-i18n="scenario.01.desc">设定一次，每天自动整理股市、币价、天气、新闻，推到你的通讯软件。</p>
-            <span class="font-label text-[9px] tracking-[0.3em] uppercase text-outline" data-i18n="scenario.01.tag">⏰ 定时自动推送</span>
-          </div>
-          <div class="shutter-effect bg-secondary p-8 border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 flex flex-col justify-between reveal" style="min-height:200px;">
-            <span class="font-headline text-4xl text-on-secondary">🔔</span>
-            <div>
-              <h3 class="font-label font-bold text-on-secondary text-xs tracking-widest uppercase mb-2" data-i18n="scenario.02.title">币价跌了，直接通知你</h3>
-              <p class="font-body text-on-secondary/70 text-xs" data-i18n="scenario.02.desc">设好价格警报，跌破才通知你。</p>
-            </div>
-          </div>
-          <div class="shutter-effect bg-surface-container p-8 border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 flex flex-col justify-end reveal" style="min-height:200px;">
-            <span class="font-label text-[9px] tracking-widest text-outline block mb-4">NATIVE</span>
-            <p class="font-body text-lg font-light italic text-on-surface-variant" data-i18n="scenario.04.title">"天天开著的通讯软件里"</p>
-            <p class="font-body text-xs text-outline mt-3" data-i18n="scenario.04.tag">💬 通讯软件原生</p>
-          </div>
-          <div class="shutter-effect md:col-span-2 bg-surface-container-low border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 relative overflow-hidden reveal" style="min-height:200px;">
-            <div class="absolute inset-0" style="background-image:linear-gradient(rgba(0,244,254,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,244,254,0.025) 1px,transparent 1px);background-size:40px 40px;"></div>
-            <div class="relative z-10 p-10 h-full flex flex-col justify-center">
-              <span class="font-label text-[10px] tracking-widest text-secondary uppercase mb-4">03</span>
-              <h3 class="font-headline text-2xl md:text-3xl mb-4" data-i18n="scenario.03.title">贴网址，三秒拿重点</h3>
-              <p class="font-body text-sm text-on-surface-variant" data-i18n="scenario.03.desc">文章、视频、PDF，发给大闸蟹，帮你抓重点。</p>
-            </div>
-          </div>
-          <div class="shutter-effect bg-surface-container-high/50 border-r-[0.5px] border-b-[0.5px] border-outline-variant/10 p-8 flex flex-col justify-end reveal" style="min-height:160px;">
-            <h3 class="font-label text-xs tracking-widest uppercase mb-4" data-i18n="scenario.05.title">随时翻译 · 随时搜索</h3>
-            <div class="w-full h-px bg-gradient-to-r from-secondary to-transparent"></div>
-          </div>
-          <div class="shutter-effect bg-surface-container border-r-[0.5px] border-[#00f4fe]/10 p-8 flex flex-col justify-end reveal" style="min-height:160px;">
-            <span class="font-label text-[9px] tracking-widest text-outline block mb-4">MEMORY</span>
-            <p class="font-body text-lg font-light italic text-on-surface-variant" data-i18n="scenario.06.title">"你说它学，越用越懂你"</p>
-            <p class="font-body text-xs text-outline mt-3" data-i18n="scenario.06.tag">🧠 个性化记忆</p>
-          </div>
-        </div>
-      </div>
-    </section>
+ <div class="grid grid-cols-1 md:grid-cols-4 gap-0 border-l-[0.5px] border-[#00f4fe]/10">
+ <div class="shutter-effect md:col-span-2 md:row-span-2 bg-surface-container-high p-10 border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 flex flex-col justify-end reveal" style="min-height:280px;">
+ <span class="font-label text-secondary text-[10px] tracking-widest mb-4 block">01</span>
+ <h3 class="font-headline text-2xl md:text-3xl mb-4" data-i18n="scenario.01.title">早上八点，自动送早报</h3>
+ <p class="font-body text-on-surface-variant text-sm leading-relaxed mb-6" data-i18n="scenario.01.desc">设定一次，每天自动整理股市、币价、天气、新闻，推到你的通讯软件。</p>
+ <span class="font-label text-[9px] tracking-[0.3em] uppercase text-outline" data-i18n="scenario.01.tag">⏰ 定时自动推送</span>
+ </div>
+ <div class="shutter-effect bg-secondary p-8 border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 flex flex-col justify-between reveal" style="min-height:200px;">
+ <span class="font-headline text-4xl text-on-secondary">🔔</span>
+ <div>
+ <h3 class="font-label font-bold text-on-secondary text-xs tracking-widest uppercase mb-2" data-i18n="scenario.02.title">币价跌了，直接通知你</h3>
+ <p class="font-body text-on-secondary/70 text-xs" data-i18n="scenario.02.desc">设好价格警报，跌破才通知你。</p>
+ </div>
+ </div>
+ <div class="shutter-effect bg-surface-container p-8 border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 flex flex-col justify-end reveal" style="min-height:200px;">
+ <span class="font-label text-[9px] tracking-widest text-outline block mb-4">NATIVE</span>
+ <p class="font-body text-lg font-light text-on-surface-variant" data-i18n="scenario.04.title">"天天开著的通讯软件里"</p>
+ <p class="font-body text-xs text-outline mt-3" data-i18n="scenario.04.tag">💬 通讯软件原生</p>
+ </div>
+ <div class="shutter-effect md:col-span-2 bg-surface-container-low border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 relative overflow-hidden reveal" style="min-height:200px;">
+ <div class="absolute inset-0" style="background-image:linear-gradient(rgba(0,244,254,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,244,254,0.025) 1px,transparent 1px);background-size:40px 40px;"></div>
+ <div class="relative z-10 p-10 h-full flex flex-col justify-center">
+ <span class="font-label text-[10px] tracking-widest text-secondary uppercase mb-4">03</span>
+ <h3 class="font-headline text-2xl md:text-3xl mb-4" data-i18n="scenario.03.title">贴网址，三秒拿重点</h3>
+ <p class="font-body text-sm text-on-surface-variant" data-i18n="scenario.03.desc">文章、视频、PDF，发给大闸蟹，帮你抓重点。</p>
+ </div>
+ </div>
+ <div class="shutter-effect bg-surface-container-high/50 border-r-[0.5px] border-b-[0.5px] border-outline-variant/10 p-8 flex flex-col justify-end reveal" style="min-height:160px;">
+ <h3 class="font-label text-xs tracking-widest uppercase mb-4" data-i18n="scenario.05.title">随时翻译 · 随时搜索</h3>
+ <div class="w-full h-px bg-gradient-to-r from-secondary to-transparent"></div>
+ </div>
+ <div class="shutter-effect bg-surface-container border-r-[0.5px] border-[#00f4fe]/10 p-8 flex flex-col justify-end reveal" style="min-height:160px;">
+ <span class="font-label text-[9px] tracking-widest text-outline block mb-4">MEMORY</span>
+ <p class="font-body text-lg font-light text-on-surface-variant" data-i18n="scenario.06.title">"你说它学，越用越懂你"</p>
+ <p class="font-body text-xs text-outline mt-3" data-i18n="scenario.06.tag">🧠 个性化记忆</p>
+ </div>
+ </div>
+ </div>
+ </section>
 
-    <!-- ══════════════════════════════════════════════════════════
-         FEATURES
-    ═══════════════════════════════════════════════════════════→ -->
-    <section id="features" class="py-32 px-6 md:px-16 bg-surface-container-low">
-      <div class="max-w-[1400px] mx-auto">
-        <div class="mb-16 reveal flex flex-col md:flex-row justify-between md:items-end border-b-[0.5px] border-outline-variant/20 pb-10 gap-4">
-          <div>
-            <span class="font-label text-[10px] tracking-[0.4em] text-primary uppercase block mb-4" data-i18n="features.label">// WHAT'S INCLUDED</span>
-            <h2 class="font-headline font-light leading-none" style="font-size:clamp(2rem,5vw,4rem);">9 种技能，<span class="italic">开箱即用。</span></h2>
-          </div>
-          <p class="font-label text-[10px] tracking-widest text-outline uppercase md:text-right md:max-w-[160px]" data-i18n="features.sub">部署好就能直接用，不需要任何额外设定</p>
-        </div>
+ <!-- ══════════════════════════════════════════════════════════
+ FEATURES
+ ═══════════════════════════════════════════════════════════→ -->
+ <section id="features" class="py-32 px-6 md:px-16 bg-surface-container-low">
+ <div class="max-w-[1400px] mx-auto">
+ <div class="mb-16 reveal flex flex-col md:flex-row justify-between md:items-end border-b-[0.5px] border-outline-variant/20 pb-10 gap-4">
+ <div>
+ <span class="font-label text-[10px] tracking-[0.4em] text-primary uppercase block mb-4" data-i18n="features.label">// WHAT'S INCLUDED</span>
+ <h2 class="font-headline font-light leading-none" style="font-size:clamp(2rem,5vw,4rem);">9 种技能，<span class="">开箱即用。</span></h2>
+ </div>
+ <p class="font-label text-[10px] tracking-widest text-outline uppercase md:text-right md:max-w-[160px]" data-i18n="features.sub">部署好就能直接用，不需要任何额外设定</p>
+ </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border-l-[0.5px] border-[#00f4fe]/10">
-          <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">🔍</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.01.title">DuckDuckGo 搜索</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.01.desc">不需要 API Key 的网络搜索，随时查最新资讯，不被封锁。</p><span class="inline-block mt-5 font-label text-[9px] tracking-[0.3em] uppercase border-[0.5px] border-secondary/30 text-secondary px-3 py-1" data-i18n="feat.01.tag">免费使用</span></div>
-          <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">🌤</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.03.title">天气预报</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.03.desc">查任意城市天气、未来 7 天预报，出门前一秒搞定。</p></div>
-          <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">🌐</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.04.title">语言翻译</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.04.desc">支持 100+ 语言即时互译，英文、日文、韩文一键翻。</p></div>
-          <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">📄</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.05.title">文章摘要</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.05.desc">贴上网址，自动抓全文并整理成 3–5 点重点摘要。</p></div>
-          <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">📈</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.06.title">股票资讯</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.06.desc">查询股票实时价格、历史走势与基本资讯，随时掌握市场动态。</p></div>
-          <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">₿</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.07.title">加密货币行情</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.07.desc">实时价格、市值排名、涨跌幅，BTC、ETH、山寨币都能查。</p></div>
-          <div class="shutter-effect md:col-span-2 border-r-[0.5px] border-[#00f4fe]/10 p-8 bg-surface-container hover:bg-surface-container-high transition-colors reveal"><span class="text-2xl block mb-5">📰</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.08.title">新闻摘要</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.08.desc">自动抓最新新闻并整理成每日简报，科技、财经、国际都涵盖。</p></div>
-          <div class="shutter-effect border-r-[0.5px] border-[#cafd00]/20 p-8 hover:bg-surface-container transition-colors reveal" style="border-top-color:rgba(202,253,0,0.2);border-top-width:0.5px;"><span class="text-2xl block mb-5">🧰</span><h4 class="font-label text-xs tracking-widest uppercase text-primary mb-3" data-i18n="feat.09.title">自定义技能</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.09.desc">告诉大闸蟹你要什么功能，它帮你写好安装好。</p><span class="inline-block mt-5 font-label text-[9px] tracking-[0.3em] uppercase border-[0.5px] border-primary/30 text-primary px-3 py-1">无限扩展</span></div>
-        </div>
-      </div>
-    </section>
+ <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border-l-[0.5px] border-[#00f4fe]/10">
+ <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">🔍</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.01.title">DuckDuckGo 搜索</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.01.desc">不需要 API Key 的网络搜索，随时查最新资讯，不被封锁。</p><span class="inline-block mt-5 font-label text-[9px] tracking-[0.3em] uppercase border-[0.5px] border-secondary/30 text-secondary px-3 py-1" data-i18n="feat.01.tag">免费使用</span></div>
+ <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">🌤</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.03.title">天气预报</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.03.desc">查任意城市天气、未来 7 天预报，出门前一秒搞定。</p></div>
+ <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">🌐</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.04.title">语言翻译</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.04.desc">支持 100+ 语言即时互译，英文、日文、韩文一键翻。</p></div>
+ <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">📄</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.05.title">文章摘要</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.05.desc">贴上网址，自动抓全文并整理成 3–5 点重点摘要。</p></div>
+ <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">📈</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.06.title">股票资讯</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.06.desc">查询股票实时价格、历史走势与基本资讯，随时掌握市场动态。</p></div>
+ <div class="shutter-effect border-r-[0.5px] border-b-[0.5px] border-[#00f4fe]/10 p-8 hover:bg-surface-container transition-colors reveal"><span class="text-2xl block mb-5">₿</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.07.title">加密货币行情</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.07.desc">实时价格、市值排名、涨跌幅，BTC、ETH、山寨币都能查。</p></div>
+ <div class="shutter-effect md:col-span-2 border-r-[0.5px] border-[#00f4fe]/10 p-8 bg-surface-container hover:bg-surface-container-high transition-colors reveal"><span class="text-2xl block mb-5">📰</span><h4 class="font-label text-xs tracking-widest uppercase text-on-surface mb-3" data-i18n="feat.08.title">新闻摘要</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.08.desc">自动抓最新新闻并整理成每日简报，科技、财经、国际都涵盖。</p></div>
+ <div class="shutter-effect border-r-[0.5px] border-[#cafd00]/20 p-8 hover:bg-surface-container transition-colors reveal" style="border-top-color:rgba(202,253,0,0.2);border-top-width:0.5px;"><span class="text-2xl block mb-5">🧰</span><h4 class="font-label text-xs tracking-widest uppercase text-primary mb-3" data-i18n="feat.09.title">自定义技能</h4><p class="font-body text-sm text-on-surface-variant leading-relaxed" data-i18n="feat.09.desc">告诉大闸蟹你要什么功能，它帮你写好安装好。</p><span class="inline-block mt-5 font-label text-[9px] tracking-[0.3em] uppercase border-[0.5px] border-primary/30 text-primary px-3 py-1">无限扩展</span></div>
+ </div>
+ </div>
+ </section>
 
-    <!-- ══════════════════════════════════════════════════════════
-         PRICING
-    ═══════════════════════════════════════════════════════════→ -->
-    <section id="pricing" class="py-32 px-6 md:px-16 bg-surface">
-      <div class="max-w-[1400px] mx-auto">
-        <div class="mb-16 reveal">
-          <span class="font-label text-[10px] tracking-[0.4em] text-secondary uppercase mb-4 block" data-i18n="pricing.label">// CAPITAL ALLOCATION</span>
-          <h2 class="font-headline font-light italic leading-none mb-1" style="font-size:clamp(2.5rem,7vw,5.5rem);">选择你的</h2>
-          <h2 class="font-headline font-light leading-none" style="font-size:clamp(2.5rem,7vw,5.5rem);">方<span class="text-secondary italic">案。</span></h2>
-          <p class="font-body text-on-surface-variant mt-6" data-i18n="pricing.sub">全人民币计价，月缴，到期不续费自动停止</p>
-        </div>
+ <!-- ══════════════════════════════════════════════════════════
+ PRICING
+ ═══════════════════════════════════════════════════════════→ -->
+ <section id="pricing" class="py-32 px-6 md:px-16 bg-surface">
+ <div class="max-w-[1400px] mx-auto">
+ <div class="mb-16 reveal">
+ <span class="font-label text-[10px] tracking-[0.4em] text-secondary uppercase mb-4 block" data-i18n="pricing.label">// CAPITAL ALLOCATION</span>
+ <h2 class="font-headline font-light leading-none mb-1" style="font-size:clamp(2.5rem,7vw,5.5rem);">选择你的</h2>
+ <h2 class="font-headline font-light leading-none" style="font-size:clamp(2.5rem,7vw,5.5rem);">方<span class="text-secondary ">案。</span></h2>
+ <p class="font-body text-on-surface-variant mt-6" data-i18n="pricing.sub">全人民币计价，月缴，到期不续费自动停止</p>
+ </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border-l-[0.5px] border-[#00f4fe]/10">
+ <div class="grid grid-cols-1 md:grid-cols-3 gap-0 border-l-[0.5px] border-[#00f4fe]/10">
 
-          <!-- Starter -->
-          <div class="group relative flex flex-col p-10 md:p-14 border-r-[0.5px] border-b-[0.5px] md:border-b-0 border-[#00f4fe]/10 transition-all duration-700 hover:bg-surface-container-low reveal">
-            <div class="mb-auto">
-              <span class="font-label text-on-surface-variant text-[10px] tracking-[0.3em] uppercase block mb-12">// LEVEL 01</span>
-              <h3 class="font-headline text-4xl mb-4 font-light italic">Starter</h3>
-              <p class="font-body text-on-surface-variant text-sm mb-12 leading-relaxed opacity-60" data-i18n="plan.starter.sub">个人用户，轻量使用</p>
-              <ul class="space-y-5 font-label text-[10px] tracking-widest uppercase text-slate-300">
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.starter.f1">1 个 Bot 账号</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.starter.f2">9 种预装技能</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.starter.f3">自带 AI API Key</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.starter.f4">基础记忆功能</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.starter.f5">24/7 云端在线</span></li>
-                <li class="flex items-center gap-3 opacity-30"><span class="w-1.5 h-1.5 bg-outline flex-shrink-0"></span><span data-i18n="plan.starter.f6">定时计划任务</span></li>
-                <li class="flex items-center gap-3 opacity-30"><span class="w-1.5 h-1.5 bg-outline flex-shrink-0"></span><span data-i18n="plan.starter.f7">多用户授权</span></li>
-              </ul>
-            </div>
-            <div class="mt-16">
-              <span class="font-headline text-6xl text-secondary block mb-1">¥199</span>
-              <span class="font-label text-[10px] tracking-[0.2em] text-on-surface-variant uppercase block mb-8" data-i18n="pricing.mo">/月</span>
-              <button onclick="window.location.href='/purchase?plan=starter&mode=proxy&lang='+(localStorage.getItem('dzx-lang')||'zh')"
-                class="shutter-btn w-full py-5 border-[0.5px] border-secondary/30 font-label text-[10px] tracking-[0.3em] uppercase text-secondary hover:shadow-[0_0_20px_rgba(0,244,254,0.2)] transition-all" data-i18n="pricing.buy"><span>立即购买</span></button>
-            </div>
-          </div>
+ <!-- Starter -->
+ <div class="group relative flex flex-col p-10 md:p-14 border-r-[0.5px] border-b-[0.5px] md:border-b-0 border-[#00f4fe]/10 transition-all duration-700 hover:bg-surface-container-low reveal">
+ <div class="mb-auto">
+ <span class="font-label text-on-surface-variant text-[10px] tracking-[0.3em] uppercase block mb-12">// LEVEL 01</span>
+ <h3 class="font-headline text-4xl mb-4 font-light ">Starter</h3>
+ <p class="font-body text-on-surface-variant text-sm mb-12 leading-relaxed opacity-60" data-i18n="plan.starter.sub">个人用户，轻量使用</p>
+ <ul class="space-y-5 font-label text-[10px] tracking-widest uppercase text-slate-300">
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.starter.f1">1 个 Bot 账号</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.starter.f2">9 种预装技能</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.starter.f3">自带 AI API Key</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.starter.f4">基础记忆功能</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.starter.f5">24/7 云端在线</span></li>
+ <li class="flex items-center gap-3 opacity-30"><span class="w-1.5 h-1.5 bg-outline flex-shrink-0"></span><span data-i18n="plan.starter.f6">定时计划任务</span></li>
+ <li class="flex items-center gap-3 opacity-30"><span class="w-1.5 h-1.5 bg-outline flex-shrink-0"></span><span data-i18n="plan.starter.f7">多用户授权</span></li>
+ </ul>
+ </div>
+ <div class="mt-16">
+ <span class="font-headline text-6xl text-secondary block mb-1">¥199</span>
+ <span class="font-label text-[10px] tracking-[0.2em] text-on-surface-variant uppercase block mb-8" data-i18n="pricing.mo">/月</span>
+ <button onclick="window.location.href='/purchase?plan=starter&mode=proxy&lang='+(localStorage.getItem('dzx-lang')||'zh')"
+ class="shutter-btn w-full py-5 border-[0.5px] border-secondary/30 font-label text-[10px] tracking-[0.3em] uppercase text-secondary hover:shadow-[0_0_20px_rgba(0,244,254,0.2)] transition-all" data-i18n="pricing.buy"><span>立即购买</span></button>
+ </div>
+ </div>
 
-          <!-- Standard (Featured) -->
-          <div class="group relative flex flex-col p-10 md:p-14 border-r-[0.5px] border-b-[0.5px] md:border-b-0 border-[#00f4fe]/30 bg-surface-container-low glass-glow-cyan transition-all duration-700 reveal" style="border-top:0.5px solid rgba(0,244,254,0.4);">
-            <div class="absolute inset-0 bg-gradient-to-b from-secondary/5 to-transparent opacity-60 pointer-events-none"></div>
-            <div class="relative z-10 mb-auto">
-              <span class="font-label text-secondary text-[10px] tracking-[0.3em] uppercase block mb-12">★ <span data-i18n="pricing.popular">最多人选择</span></span>
-              <h3 class="font-headline text-4xl mb-4 font-light italic">Standard</h3>
-              <p class="font-body text-on-surface-variant text-sm mb-12 leading-relaxed opacity-80" data-i18n="plan.std.sub">成长中的高效用户</p>
-              <ul class="space-y-5 font-label text-[10px] tracking-widest uppercase text-white">
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f1">1 个 Bot 账号</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f2">9 种预装技能</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f3">自带 AI API Key</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f4">高级记忆 + 个性化设置</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f5">24/7 云端在线</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f6">定时计划任务（早报、警报）</span></li>
-                <li class="flex items-center gap-3 opacity-30"><span class="w-1.5 h-1.5 bg-outline flex-shrink-0"></span><span data-i18n="plan.std.f7">多用户授权</span></li>
-              </ul>
-            </div>
-            <div class="relative z-10 mt-16">
-              <span class="font-headline text-7xl text-white block mb-1">¥399</span>
-              <span class="font-label text-[10px] tracking-[0.2em] text-on-surface-variant uppercase block mb-8" data-i18n="pricing.mo">/月</span>
-              <button onclick="window.location.href='/purchase?plan=standard&mode=proxy&lang='+(localStorage.getItem('dzx-lang')||'zh')"
-                class="shutter-btn w-full py-5 bg-secondary text-on-secondary font-label text-[10px] tracking-[0.3em] uppercase font-bold hover:shadow-[0_0_30px_rgba(0,244,254,0.5)] transition-all" data-i18n="pricing.buy"><span>立即购买 ↗</span></button>
-            </div>
-          </div>
+ <!-- Standard (Featured) -->
+ <div class="group relative flex flex-col p-10 md:p-14 border-r-[0.5px] border-b-[0.5px] md:border-b-0 border-[#00f4fe]/30 bg-surface-container-low glass-glow-cyan transition-all duration-700 reveal" style="border-top:0.5px solid rgba(0,244,254,0.4);">
+ <div class="absolute inset-0 bg-gradient-to-b from-secondary/5 to-transparent opacity-60 pointer-events-none"></div>
+ <div class="relative z-10 mb-auto">
+ <span class="font-label text-secondary text-[10px] tracking-[0.3em] uppercase block mb-12">★ <span data-i18n="pricing.popular">最多人选择</span></span>
+ <h3 class="font-headline text-4xl mb-4 font-light ">Standard</h3>
+ <p class="font-body text-on-surface-variant text-sm mb-12 leading-relaxed opacity-80" data-i18n="plan.std.sub">成长中的高效用户</p>
+ <ul class="space-y-5 font-label text-[10px] tracking-widest uppercase text-white">
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f1">1 个 Bot 账号</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f2">9 种预装技能</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f3">自带 AI API Key</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f4">高级记忆 + 个性化设置</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f5">24/7 云端在线</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.std.f6">定时计划任务（早报、警报）</span></li>
+ <li class="flex items-center gap-3 opacity-30"><span class="w-1.5 h-1.5 bg-outline flex-shrink-0"></span><span data-i18n="plan.std.f7">多用户授权</span></li>
+ </ul>
+ </div>
+ <div class="relative z-10 mt-16">
+ <span class="font-headline text-7xl text-white block mb-1">¥399</span>
+ <span class="font-label text-[10px] tracking-[0.2em] text-on-surface-variant uppercase block mb-8" data-i18n="pricing.mo">/月</span>
+ <button onclick="window.location.href='/purchase?plan=standard&mode=proxy&lang='+(localStorage.getItem('dzx-lang')||'zh')"
+ class="shutter-btn w-full py-5 bg-secondary text-on-secondary font-label text-[10px] tracking-[0.3em] uppercase font-bold hover:shadow-[0_0_30px_rgba(0,244,254,0.5)] transition-all" data-i18n="pricing.buy"><span>立即购买 ↗</span></button>
+ </div>
+ </div>
 
-          <!-- Pro -->
-          <div class="group relative flex flex-col p-10 md:p-14 border-r-[0.5px] border-[#00f4fe]/10 transition-all duration-700 hover:bg-surface-container-low reveal">
-            <div class="mb-auto">
-              <span class="font-label text-on-surface-variant text-[10px] tracking-[0.3em] uppercase block mb-12">// GLOBAL TIER</span>
-              <h3 class="font-headline text-4xl mb-4 font-light italic">Pro</h3>
-              <p class="font-body text-on-surface-variant text-sm mb-12 leading-relaxed opacity-60" data-i18n="plan.pro.sub">团队与多账号需求</p>
-              <ul class="space-y-5 font-label text-[10px] tracking-widest uppercase text-slate-300">
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f1">最多 3 个 Bot</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f2">9 种预装技能 + 优先更新</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f3">自带 AI API Key</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f4">高级记忆 + 个性化设置</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f5">24/7 云端在线</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f6">定时计划任务（早报、警报）</span></li>
-                <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f7">多用户授权（最多 5 人）</span></li>
-              </ul>
-            </div>
-            <div class="mt-16">
-              <span class="font-headline text-6xl text-secondary block mb-1">¥699</span>
-              <span class="font-label text-[10px] tracking-[0.2em] text-on-surface-variant uppercase block mb-8" data-i18n="pricing.mo">/月</span>
-              <button onclick="window.location.href='/purchase?plan=pro&mode=proxy&lang='+(localStorage.getItem('dzx-lang')||'zh')"
-                class="shutter-btn w-full py-5 border-[0.5px] border-secondary/30 font-label text-[10px] tracking-[0.3em] uppercase text-secondary hover:shadow-[0_0_20px_rgba(0,244,254,0.2)] transition-all" data-i18n="pricing.buy"><span>立即购买</span></button>
-            </div>
-          </div>
-        </div>
+ <!-- Pro -->
+ <div class="group relative flex flex-col p-10 md:p-14 border-r-[0.5px] border-[#00f4fe]/10 transition-all duration-700 hover:bg-surface-container-low reveal">
+ <div class="mb-auto">
+ <span class="font-label text-on-surface-variant text-[10px] tracking-[0.3em] uppercase block mb-12">// GLOBAL TIER</span>
+ <h3 class="font-headline text-4xl mb-4 font-light ">Pro</h3>
+ <p class="font-body text-on-surface-variant text-sm mb-12 leading-relaxed opacity-60" data-i18n="plan.pro.sub">团队与多账号需求</p>
+ <ul class="space-y-5 font-label text-[10px] tracking-widest uppercase text-slate-300">
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f1">最多 3 个 Bot</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f2">9 种预装技能 + 优先更新</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f3">自带 AI API Key</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f4">高级记忆 + 个性化设置</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f5">24/7 云端在线</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f6">定时计划任务（早报、警报）</span></li>
+ <li class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-secondary flex-shrink-0"></span><span data-i18n="plan.pro.f7">多用户授权（最多 5 人）</span></li>
+ </ul>
+ </div>
+ <div class="mt-16">
+ <span class="font-headline text-6xl text-secondary block mb-1">¥699</span>
+ <span class="font-label text-[10px] tracking-[0.2em] text-on-surface-variant uppercase block mb-8" data-i18n="pricing.mo">/月</span>
+ <button onclick="window.location.href='/purchase?plan=pro&mode=proxy&lang='+(localStorage.getItem('dzx-lang')||'zh')"
+ class="shutter-btn w-full py-5 border-[0.5px] border-secondary/30 font-label text-[10px] tracking-[0.3em] uppercase text-secondary hover:shadow-[0_0_20px_rgba(0,244,254,0.2)] transition-all" data-i18n="pricing.buy"><span>立即购买</span></button>
+ </div>
+ </div>
+ </div>
 
-        <div class="mt-8 reveal">
-          <p class="font-body text-on-surface-variant text-sm" data-i18n="pricing.footnote">以上均为主机费用（人民币）· AI 使用费另计（用自己的 Key，直接付给 AI 厂商）</p>
-          <a href="https://t.me/dazhaxi" target="_blank" class="inline-flex items-center gap-2 text-secondary font-label text-[10px] tracking-widest uppercase mt-4 hover:text-secondary-dim transition-colors" data-i18n="pricing.chat">💬 有问题先聊聊 →</a>
-        </div>
-      </div>
-    </section>
+ <div class="mt-8 reveal">
+ <p class="font-body text-on-surface-variant text-sm" data-i18n="pricing.footnote">以上均为主机费用（人民币）· AI 使用费另计（用自己的 Key，直接付给 AI 厂商）</p>
+ <a href="https://t.me/dazhaxi" target="_blank" class="inline-flex items-center gap-2 text-secondary font-label text-[10px] tracking-widest uppercase mt-4 hover:text-secondary-dim transition-colors" data-i18n="pricing.chat">💬 有问题先聊聊 →</a>
+ </div>
+ </div>
+ </section>
 
-    <!-- ══════════════════════════════════════════════════════════
-         COMPARE
-    ═══════════════════════════════════════════════════════════→ -->
-    <section id="compare" class="py-32 px-6 md:px-16 bg-surface-container-low">
-      <div class="max-w-5xl mx-auto">
-        <div class="mb-16 reveal">
-          <span class="font-label text-[10px] tracking-[0.4em] text-secondary uppercase mb-4 block" data-i18n="compare.label">// THE DIFFERENCE</span>
-          <h2 class="font-headline text-4xl md:text-5xl font-light italic" data-i18n="compare.h2">大闸蟹 vs 一般 AI</h2>
-          <p class="font-body text-on-surface-variant mt-4" data-i18n="compare.sub">DeepSeek、Claude 很强，但它们做不到这些</p>
-        </div>
-        <div class="hidden md:block reveal glass-glow-cyan border-[0.5px] border-[#00f4fe]/15">
-          <table class="w-full">
-            <thead>
-              <tr class="bg-surface-container">
-                <th class="text-left px-8 py-4 font-label text-[10px] tracking-widest uppercase text-outline">功能</th>
-                <th class="px-8 py-4 font-label text-[10px] tracking-widest uppercase text-outline" data-i18n="compare.col2">一般 AI</th>
-                <th class="px-8 py-4 font-label text-[10px] tracking-widest uppercase text-secondary" data-i18n="cmp.brand.label">大闸蟹</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row1.label">24/7 在线</td><td class="px-8 py-4 text-center text-on-surface-variant text-sm">❌</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
-              <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row2.label">主动推送通知</td><td class="px-8 py-4 text-center text-sm">❌</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
-              <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row3.label">定时计划任务</td><td class="px-8 py-4 text-center text-sm">❌</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
-              <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row4.label">长期记忆</td><td class="px-8 py-4 text-center text-sm">⚠️</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
-              <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row5.label">住在通讯软件</td><td class="px-8 py-4 text-center text-sm">❌</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
-              <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row6.label">扩展技能</td><td class="px-8 py-4 text-center text-sm">⚠️</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
-              <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row7.label">自选 AI 模型</td><td class="px-8 py-4 text-center text-sm">❌</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
-              <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row9.label">你的资料不送出去</td><td class="px-8 py-4 text-center text-sm">⚠️</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
+ <!-- ══════════════════════════════════════════════════════════
+ COMPARE
+ ═══════════════════════════════════════════════════════════→ -->
+ <section id="compare" class="py-32 px-6 md:px-16 bg-surface-container-low">
+ <div class="max-w-5xl mx-auto">
+ <div class="mb-16 reveal">
+ <span class="font-label text-[10px] tracking-[0.4em] text-secondary uppercase mb-4 block" data-i18n="compare.label">// THE DIFFERENCE</span>
+ <h2 class="font-headline text-4xl md:text-5xl font-light " data-i18n="compare.h2">大闸蟹 vs 一般 AI</h2>
+ <p class="font-body text-on-surface-variant mt-4" data-i18n="compare.sub">DeepSeek、Claude 很强，但它们做不到这些</p>
+ </div>
+ <div class="hidden md:block reveal glass-glow-cyan border-[0.5px] border-[#00f4fe]/15">
+ <table class="w-full">
+ <thead>
+ <tr class="bg-surface-container">
+ <th class="text-left px-8 py-4 font-label text-[10px] tracking-widest uppercase text-outline">功能</th>
+ <th class="px-8 py-4 font-label text-[10px] tracking-widest uppercase text-outline" data-i18n="compare.col2">一般 AI</th>
+ <th class="px-8 py-4 font-label text-[10px] tracking-widest uppercase text-secondary" data-i18n="cmp.brand.label">大闸蟹</th>
+ </tr>
+ </thead>
+ <tbody>
+ <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row1.label">24/7 在线</td><td class="px-8 py-4 text-center text-on-surface-variant text-sm">❌</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
+ <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row2.label">主动推送通知</td><td class="px-8 py-4 text-center text-sm">❌</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
+ <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row3.label">定时计划任务</td><td class="px-8 py-4 text-center text-sm">❌</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
+ <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row4.label">长期记忆</td><td class="px-8 py-4 text-center text-sm">⚠️</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
+ <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row5.label">住在通讯软件</td><td class="px-8 py-4 text-center text-sm">❌</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
+ <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row6.label">扩展技能</td><td class="px-8 py-4 text-center text-sm">⚠️</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
+ <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row7.label">自选 AI 模型</td><td class="px-8 py-4 text-center text-sm">❌</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
+ <tr class="compare-row border-t-[0.5px] border-outline-variant/20"><td class="px-8 py-4 font-body text-sm text-on-surface-variant" data-i18n="cmp.row9.label">你的资料不送出去</td><td class="px-8 py-4 text-center text-sm">⚠️</td><td class="px-8 py-4 text-center text-secondary text-sm">✅</td></tr>
+ </tbody>
+ </table>
+ </div>
+ </div>
+ </section>
 
-    <!-- ══════════════════════════════════════════════════════════
-         CTA
-    ═══════════════════════════════════════════════════════════→ -->
-    <section class="py-48 px-6 md:px-16 text-center bg-surface">
-      <h2 class="font-headline font-light italic tracking-tighter mb-4 opacity-10 reveal" style="font-size:clamp(3rem,12vw,9rem);">Step Forward.</h2>
-      <h2 class="font-headline font-light italic text-secondary mb-16 reveal text-glow-cyan" style="font-size:clamp(2rem,5vw,4rem);">准备好了吗？</h2>
-      <p class="font-body text-on-surface-variant text-lg mb-12 reveal">加入数千位用户，让 AI 住进你的通讯软件，从今天开始。</p>
-      <div class="flex flex-col md:flex-row gap-6 justify-center items-center reveal">
-        <button onclick="window.location.href='#pricing'" class="shutter-btn w-full md:w-auto px-12 py-5 bg-secondary text-on-secondary font-label font-bold tracking-[0.3em] uppercase hover:shadow-[0_0_40px_rgba(0,244,254,0.5)] active:scale-95 transition-all"><span>选择方案 ↗</span></button>
-        <a href="https://t.me/dazhaxi" target="_blank" class="shutter-btn w-full md:w-auto px-12 py-5 border-[0.5px] border-secondary/50 text-secondary font-label font-bold tracking-[0.3em] uppercase hover:bg-secondary/5 active:scale-95 transition-all"><span>💬 先聊聊</span></a>
-      </div>
-    </section>
-  </main>
+ <!-- ══════════════════════════════════════════════════════════
+ CTA
+ ═══════════════════════════════════════════════════════════→ -->
+ <section class="py-48 px-6 md:px-16 text-center bg-surface">
+ <h2 class="font-headline font-light tracking-tighter mb-4 opacity-10 reveal" style="font-size:clamp(3rem,12vw,9rem);">Step Forward.</h2>
+ <h2 class="font-headline font-light text-secondary mb-16 reveal text-glow-cyan" style="font-size:clamp(2rem,5vw,4rem);">准备好了吗？</h2>
+ <p class="font-body text-on-surface-variant text-lg mb-12 reveal">加入数千位用户，让 AI 住进你的通讯软件，从今天开始。</p>
+ <div class="flex flex-col md:flex-row gap-6 justify-center items-center reveal">
+ <button onclick="window.location.href='#pricing'" class="shutter-btn w-full md:w-auto px-12 py-5 bg-secondary text-on-secondary font-label font-bold tracking-[0.3em] uppercase hover:shadow-[0_0_40px_rgba(0,244,254,0.5)] active:scale-95 transition-all"><span>选择方案 ↗</span></button>
+ <a href="https://t.me/dazhaxi" target="_blank" class="shutter-btn w-full md:w-auto px-12 py-5 border-[0.5px] border-secondary/50 text-secondary font-label font-bold tracking-[0.3em] uppercase hover:bg-secondary/5 active:scale-95 transition-all"><span>💬 先聊聊</span></a>
+ </div>
+ </section>
+ </main>
 
-  <!-- ══════════════════════════════════════════════════════════
-       FOOTER
-  ═══════════════════════════════════════════════════════════→ -->
-  <footer class="w-full px-8 md:px-16 py-16 flex flex-col md:flex-row justify-between items-end gap-12 bg-[#050505] border-t-[0.5px] border-outline-variant/30">
-    <div class="flex flex-col gap-6">
-      <div class="font-headline text-4xl font-light italic text-slate-200 opacity-20">大闸蟹</div>
-      <p class="font-body text-sm text-on-surface-variant opacity-60" data-i18n-html="footer.tagline">风浪越大，鱼越贵。<br/>你的专属 AI，住在通讯软件里。</p>
-      <p class="font-label text-[10px] tracking-[0.4em] text-slate-500 uppercase" data-i18n="footer.copy">© 2026 大闸蟹 CLOUD. ALL RIGHTS RESERVED.</p>
-    </div>
-    <div class="flex flex-wrap gap-x-10 gap-y-4">
-      <a class="font-label text-[10px] tracking-[0.3em] text-slate-500 hover:text-secondary transition-colors uppercase" href="#features" data-i18n="footer.link.features">功能介绍</a>
-      <a class="font-label text-[10px] tracking-[0.3em] text-slate-500 hover:text-secondary transition-colors uppercase" href="#pricing" data-i18n="footer.link.pricing">方案价格</a>
-      <a class="font-label text-[10px] tracking-[0.3em] text-slate-500 hover:text-secondary transition-colors uppercase" href="#compare" data-i18n="footer.link.compare">对比分析</a>
-      <a class="font-label text-[10px] tracking-[0.3em] text-slate-500 hover:text-secondary transition-colors uppercase" href="/guide" data-i18n="footer.link.guide">使用教程</a>
-      <a class="font-label text-[10px] tracking-[0.3em] text-secondary uppercase" href="/faq" data-i18n="footer.link.faq">常见问题</a>
-    </div>
-  </footer>
+ <!-- ══════════════════════════════════════════════════════════
+ FOOTER
+ ═══════════════════════════════════════════════════════════→ -->
+ <footer class="w-full px-8 md:px-16 py-16 flex flex-col md:flex-row justify-between items-end gap-12 bg-[#050505] border-t-[0.5px] border-outline-variant/30">
+ <div class="flex flex-col gap-6">
+ <div class="font-headline text-4xl font-light text-slate-200 opacity-20">大闸蟹</div>
+ <p class="font-body text-sm text-on-surface-variant opacity-60" data-i18n-html="footer.tagline">风浪越大，鱼越贵。<br/>你的专属 AI，住在通讯软件里。</p>
+ <p class="font-label text-[10px] tracking-[0.4em] text-slate-500 uppercase" data-i18n="footer.copy">© 2026 大闸蟹 CLOUD. ALL RIGHTS RESERVED.</p>
+ </div>
+ <div class="flex flex-wrap gap-x-10 gap-y-4">
+ <a class="font-label text-[10px] tracking-[0.3em] text-slate-500 hover:text-secondary transition-colors uppercase" href="#features" data-i18n="footer.link.features">功能介绍</a>
+ <a class="font-label text-[10px] tracking-[0.3em] text-slate-500 hover:text-secondary transition-colors uppercase" href="#pricing" data-i18n="footer.link.pricing">方案价格</a>
+ <a class="font-label text-[10px] tracking-[0.3em] text-slate-500 hover:text-secondary transition-colors uppercase" href="#compare" data-i18n="footer.link.compare">对比分析</a>
+ <a class="font-label text-[10px] tracking-[0.3em] text-slate-500 hover:text-secondary transition-colors uppercase" href="/guide" data-i18n="footer.link.guide">使用教程</a>
+ <a class="font-label text-[10px] tracking-[0.3em] text-secondary uppercase" href="/faq" data-i18n="footer.link.faq">常见问题</a>
+ </div>
+ </footer>
 
-  <!-- JS -->
-  <script>
-    // Scroll reveal
-    window.addEventListener('scroll', () => {
-      document.querySelectorAll('.reveal').forEach(el => {
-        if (el.getBoundingClientRect().top < window.innerHeight - 60) el.classList.add('visible');
-      });
-    }, { passive: true });
+ <!-- JS -->
+ <script>
+ // Scroll reveal
+ window.addEventListener('scroll', () => {
+ document.querySelectorAll('.reveal').forEach(el => {
+ if (el.getBoundingClientRect().top < window.innerHeight - 60) el.classList.add('visible');
+ });
+ }, { passive: true });
 
-    // Mobile menu
-    (function() {
-      const btn = document.getElementById('hamburger-btn');
-      const menu = document.getElementById('mobile-menu');
-      const overlay = document.getElementById('drawer-overlay');
-      const iconO = document.getElementById('icon-hamburger');
-      const iconC = document.getElementById('icon-close');
-      const open = () => { menu.classList.add('open'); overlay.classList.remove('hidden'); iconO.classList.add('hidden'); iconC.classList.remove('hidden'); };
-      const close = () => { menu.classList.remove('open'); overlay.classList.add('hidden'); iconO.classList.remove('hidden'); iconC.classList.add('hidden'); };
-      btn && btn.addEventListener('click', () => menu.classList.contains('open') ? close() : open());
-      overlay && overlay.addEventListener('click', close);
-      document.querySelectorAll('.mobile-link').forEach(a => a.addEventListener('click', close));
-    })();
+ // Mobile menu
+ (function() {
+ const btn = document.getElementById('hamburger-btn');
+ const menu = document.getElementById('mobile-menu');
+ const overlay = document.getElementById('drawer-overlay');
+ const iconO = document.getElementById('icon-hamburger');
+ const iconC = document.getElementById('icon-close');
+ const open = () => { menu.classList.add('open'); overlay.classList.remove('hidden'); iconO.classList.add('hidden'); iconC.classList.remove('hidden'); };
+ const close = () => { menu.classList.remove('open'); overlay.classList.add('hidden'); iconO.classList.remove('hidden'); iconC.classList.add('hidden'); };
+ btn && btn.addEventListener('click', () => menu.classList.contains('open') ? close() : open());
+ overlay && overlay.addEventListener('click', close);
+ document.querySelectorAll('.mobile-link').forEach(a => a.addEventListener('click', close));
+ })();
 
-    // i18n
-    const translations = {
-      zh: {
-        'nav.usecases':'使用场景','nav.features':'功能','nav.pricing':'方案','nav.guide':'使用教程','nav.faq':'常见问题',
-        'nav.cta':'查看方案 ↗','nav.recharge':'余额充值',
-        'hero.cta1':'立即部署 ↗','hero.cta2':'查看能做什么',
-        'whatIs.h2.line1':'什么是','whatIs.h2.line2':'大闸蟹。',
-        'whatIs.sub':'大闸蟹把 AI 安装在云端服务器，绑定你的通讯软件。从此，随时发一句话，事情就做完了。',
-        'whatIs.01.title':'住在通讯软件里面','whatIs.01.desc':'你最常开的 App 就是你的 AI 入口。不用下载新 App，不用记得另一个网址。',
-        'whatIs.02.title':'记得你','whatIs.02.desc':'有长期记忆，知道你的偏好、习惯、常用指令。每次对话都更懂你。',
-        'whatIs.03.title':'24/7 在跑','whatIs.03.desc':'你睡觉它也在运作。设定好的定时推送、价格警报，一条都不漏。',
-        'whatIs.04.title':'主动出击','whatIs.04.desc':'不用你去找它。设定条件，它主动在正确时机推送消息到你的通讯软件。',
-        'whatIs.05.title':'自选 AI 模型','whatIs.05.desc':'不被任何平台绑定。自带 API Key，随时切换 GPT-4o、Claude、Gemini 等模型。',
-        'scenarios.label':'非大闸蟹不可',
-        'scenario.01.title':'早上八点，自动送早报','scenario.01.desc':'设定一次，每天自动整理股市、币价、天气、新闻，推到你的通讯软件。','scenario.01.tag':'⏰ 定时自动推送',
-        'scenario.02.title':'币价跌了，直接通知你','scenario.02.desc':'设好价格警报，跌破才通知你。',
-        'scenario.03.title':'贴网址，三秒拿重点','scenario.03.desc':'文章、视频、PDF，发给大闸蟹，帮你抓重点。',
-        'scenario.04.title':'"天天开著的通讯软件里"','scenario.04.tag':'💬 通讯软件原生',
-        'scenario.05.title':'随时翻译 · 随时搜索',
-        'scenario.06.title':'"你说它学，越用越懂你"','scenario.06.tag':'🧠 个性化记忆',
-        'features.label':"WHAT'S INCLUDED",'features.sub':'部署好就能直接用，不需要任何额外设定',
-        'feat.01.title':'DuckDuckGo 搜索','feat.01.desc':'不需要 API Key 的网络搜索，随时查最新资讯，不被封锁。','feat.01.tag':'免费使用',
-        'feat.03.title':'天气预报','feat.03.desc':'查任意城市天气、未来 7 天预报，出门前一秒搞定。',
-        'feat.04.title':'语言翻译','feat.04.desc':'支持 100+ 语言即时互译，英文、日文、韩文一键翻。',
-        'feat.05.title':'文章摘要','feat.05.desc':'贴上网址，自动抓全文并整理成 3–5 点重点摘要。',
-        'feat.06.title':'股票资讯','feat.06.desc':'查询股票实时价格、历史走势与基本资讯，随时掌握市场动态。',
-        'feat.07.title':'加密货币行情','feat.07.desc':'实时价格、市值排名、涨跌幅，BTC、ETH、山寨币都能查。',
-        'feat.08.title':'新闻摘要','feat.08.desc':'自动抓最新新闻并整理成每日简报，科技、财经、国际都涵盖。',
-        'feat.09.title':'自定义技能','feat.09.desc':'告诉大闸蟹你要什么功能，它帮你写好安装好。',
-        'pricing.label':'CAPITAL ALLOCATION','pricing.sub':'全人民币计价，月缴，到期不续费自动停止',
-        'pricing.popular':'最多人选择','pricing.mo':'/月','pricing.buy':'立即购买','pricing.chat':'💬 有问题先聊聊 →',
-        'pricing.footnote':'以上均为主机费用（人民币）· AI 使用费另计（用自己的 Key，直接付给 AI 厂商）',
-        'plan.starter.sub':'个人用户，轻量使用','plan.starter.f1':'1 个 Bot 账号','plan.starter.f2':'9 种预装技能','plan.starter.f3':'自带 AI API Key','plan.starter.f4':'基础记忆功能','plan.starter.f5':'24/7 云端在线','plan.starter.f6':'定时计划任务','plan.starter.f7':'多用户授权',
-        'plan.std.sub':'成长中的高效用户','plan.std.f1':'1 个 Bot 账号','plan.std.f2':'9 种预装技能','plan.std.f3':'自带 AI API Key','plan.std.f4':'高级记忆 + 个性化设置','plan.std.f5':'24/7 云端在线','plan.std.f6':'定时计划任务（早报、警报）','plan.std.f7':'多用户授权',
-        'plan.pro.sub':'团队与多账号需求','plan.pro.f1':'最多 3 个 Bot','plan.pro.f2':'9 种预装技能 + 优先更新','plan.pro.f3':'自带 AI API Key','plan.pro.f4':'高级记忆 + 个性化设置','plan.pro.f5':'24/7 云端在线','plan.pro.f6':'定时计划任务（早报、警报）','plan.pro.f7':'多用户授权（最多 5 人）',
-        'compare.label':'THE DIFFERENCE','compare.h2':'大闸蟹 vs 一般 AI','compare.sub':'DeepSeek、Claude 很强，但它们做不到这些','compare.col2':'一般 AI','cmp.brand.label':'大闸蟹',
-        'cmp.row1.label':'24/7 在线','cmp.row2.label':'主动推送通知','cmp.row3.label':'定时计划任务','cmp.row4.label':'长期记忆','cmp.row5.label':'住在通讯软件','cmp.row6.label':'扩展技能','cmp.row7.label':'自选 AI 模型','cmp.row9.label':'你的资料不送出去',
-        'footer.tagline':'风浪越大，鱼越贵。<br/>你的专属 AI，住在通讯软件里。',
-        'footer.copy':'© 2026 大闸蟹 CLOUD. ALL RIGHTS RESERVED.',
-        'footer.link.features':'功能介绍','footer.link.pricing':'方案价格','footer.link.compare':'对比分析','footer.link.guide':'使用教程','footer.link.faq':'常见问题',
-        'marquee':['网页搜索','股票分析','天气预报','新闻摘要','语言翻译','文章摘要','YouTube 字幕','加密货币行情','自定义技能','PDF 阅读','微博热搜','百度搜索','哔哩哔哩','知乎热榜'],
-      }
-    };
+ // i18n
+ const translations = {
+ zh: {
+ 'nav.usecases':'使用场景','nav.features':'功能','nav.pricing':'方案','nav.guide':'使用教程','nav.faq':'常见问题',
+ 'nav.cta':'查看方案 ↗','nav.recharge':'余额充值',
+ 'hero.cta1':'立即部署 ↗','hero.cta2':'查看能做什么',
+ 'whatIs.h2.line1':'什么是','whatIs.h2.line2':'大闸蟹。',
+ 'whatIs.sub':'大闸蟹把 AI 安装在云端服务器，绑定你的通讯软件。从此，随时发一句话，事情就做完了。',
+ 'whatIs.01.title':'住在通讯软件里面','whatIs.01.desc':'你最常开的 App 就是你的 AI 入口。不用下载新 App，不用记得另一个网址。',
+ 'whatIs.02.title':'记得你','whatIs.02.desc':'有长期记忆，知道你的偏好、习惯、常用指令。每次对话都更懂你。',
+ 'whatIs.03.title':'24/7 在跑','whatIs.03.desc':'你睡觉它也在运作。设定好的定时推送、价格警报，一条都不漏。',
+ 'whatIs.04.title':'主动出击','whatIs.04.desc':'不用你去找它。设定条件，它主动在正确时机推送消息到你的通讯软件。',
+ 'whatIs.05.title':'自选 AI 模型','whatIs.05.desc':'不被任何平台绑定。自带 API Key，随时切换 GPT-4o、Claude、Gemini 等模型。',
+ 'scenarios.label':'非大闸蟹不可',
+ 'scenario.01.title':'早上八点，自动送早报','scenario.01.desc':'设定一次，每天自动整理股市、币价、天气、新闻，推到你的通讯软件。','scenario.01.tag':'⏰ 定时自动推送',
+ 'scenario.02.title':'币价跌了，直接通知你','scenario.02.desc':'设好价格警报，跌破才通知你。',
+ 'scenario.03.title':'贴网址，三秒拿重点','scenario.03.desc':'文章、视频、PDF，发给大闸蟹，帮你抓重点。',
+ 'scenario.04.title':'"天天开著的通讯软件里"','scenario.04.tag':'💬 通讯软件原生',
+ 'scenario.05.title':'随时翻译 · 随时搜索',
+ 'scenario.06.title':'"你说它学，越用越懂你"','scenario.06.tag':'🧠 个性化记忆',
+ 'features.label':"WHAT'S INCLUDED",'features.sub':'部署好就能直接用，不需要任何额外设定',
+ 'feat.01.title':'DuckDuckGo 搜索','feat.01.desc':'不需要 API Key 的网络搜索，随时查最新资讯，不被封锁。','feat.01.tag':'免费使用',
+ 'feat.03.title':'天气预报','feat.03.desc':'查任意城市天气、未来 7 天预报，出门前一秒搞定。',
+ 'feat.04.title':'语言翻译','feat.04.desc':'支持 100+ 语言即时互译，英文、日文、韩文一键翻。',
+ 'feat.05.title':'文章摘要','feat.05.desc':'贴上网址，自动抓全文并整理成 3–5 点重点摘要。',
+ 'feat.06.title':'股票资讯','feat.06.desc':'查询股票实时价格、历史走势与基本资讯，随时掌握市场动态。',
+ 'feat.07.title':'加密货币行情','feat.07.desc':'实时价格、市值排名、涨跌幅，BTC、ETH、山寨币都能查。',
+ 'feat.08.title':'新闻摘要','feat.08.desc':'自动抓最新新闻并整理成每日简报，科技、财经、国际都涵盖。',
+ 'feat.09.title':'自定义技能','feat.09.desc':'告诉大闸蟹你要什么功能，它帮你写好安装好。',
+ 'pricing.label':'CAPITAL ALLOCATION','pricing.sub':'全人民币计价，月缴，到期不续费自动停止',
+ 'pricing.popular':'最多人选择','pricing.mo':'/月','pricing.buy':'立即购买','pricing.chat':'💬 有问题先聊聊 →',
+ 'pricing.footnote':'以上均为主机费用（人民币）· AI 使用费另计（用自己的 Key，直接付给 AI 厂商）',
+ 'plan.starter.sub':'个人用户，轻量使用','plan.starter.f1':'1 个 Bot 账号','plan.starter.f2':'9 种预装技能','plan.starter.f3':'自带 AI API Key','plan.starter.f4':'基础记忆功能','plan.starter.f5':'24/7 云端在线','plan.starter.f6':'定时计划任务','plan.starter.f7':'多用户授权',
+ 'plan.std.sub':'成长中的高效用户','plan.std.f1':'1 个 Bot 账号','plan.std.f2':'9 种预装技能','plan.std.f3':'自带 AI API Key','plan.std.f4':'高级记忆 + 个性化设置','plan.std.f5':'24/7 云端在线','plan.std.f6':'定时计划任务（早报、警报）','plan.std.f7':'多用户授权',
+ 'plan.pro.sub':'团队与多账号需求','plan.pro.f1':'最多 3 个 Bot','plan.pro.f2':'9 种预装技能 + 优先更新','plan.pro.f3':'自带 AI API Key','plan.pro.f4':'高级记忆 + 个性化设置','plan.pro.f5':'24/7 云端在线','plan.pro.f6':'定时计划任务（早报、警报）','plan.pro.f7':'多用户授权（最多 5 人）',
+ 'compare.label':'THE DIFFERENCE','compare.h2':'大闸蟹 vs 一般 AI','compare.sub':'DeepSeek、Claude 很强，但它们做不到这些','compare.col2':'一般 AI','cmp.brand.label':'大闸蟹',
+ 'cmp.row1.label':'24/7 在线','cmp.row2.label':'主动推送通知','cmp.row3.label':'定时计划任务','cmp.row4.label':'长期记忆','cmp.row5.label':'住在通讯软件','cmp.row6.label':'扩展技能','cmp.row7.label':'自选 AI 模型','cmp.row9.label':'你的资料不送出去',
+ 'footer.tagline':'风浪越大，鱼越贵。<br/>你的专属 AI，住在通讯软件里。',
+ 'footer.copy':'© 2026 大闸蟹 CLOUD. ALL RIGHTS RESERVED.',
+ 'footer.link.features':'功能介绍','footer.link.pricing':'方案价格','footer.link.compare':'对比分析','footer.link.guide':'使用教程','footer.link.faq':'常见问题',
+ 'marquee':['网页搜索','股票分析','天气预报','新闻摘要','语言翻译','文章摘要','YouTube 字幕','加密货币行情','自定义技能','PDF 阅读','微博热搜','百度搜索','哔哩哔哩','知乎热榜'],
+ }
+ };
 
-    let currentLang = localStorage.getItem('dzx-lang') || 'zh';
+ let currentLang = localStorage.getItem('dzx-lang') || 'zh';
 
-    function applyLang(lang) {
-      currentLang = lang;
-      const t = translations[lang] || translations['zh'];
-      document.querySelectorAll('[data-i18n]').forEach(el => { const v = t[el.getAttribute('data-i18n')]; if (v !== undefined) el.textContent = v; });
-      document.querySelectorAll('[data-i18n-html]').forEach(el => { const v = t[el.getAttribute('data-i18n-html')]; if (v !== undefined) el.innerHTML = v; });
+ function applyLang(lang) {
+ currentLang = lang;
+ const t = translations[lang] || translations['zh'];
+ document.querySelectorAll('[data-i18n]').forEach(el => { const v = t[el.getAttribute('data-i18n')]; if (v !== undefined) el.textContent = v; });
+ document.querySelectorAll('[data-i18n-html]').forEach(el => { const v = t[el.getAttribute('data-i18n-html')]; if (v !== undefined) el.innerHTML = v; });
 
-      const track = document.getElementById('marquee-track');
-      if (track && t['marquee']) {
-        const items = [...t['marquee'], ...t['marquee']];
-        track.innerHTML = items.map(item =>
-          `<span style="display:inline-flex;align-items:center;gap:10px;padding:0 32px;font-family:'Space Grotesk',sans-serif;font-size:0.63rem;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:#777575;white-space:nowrap;"><span style="width:3px;height:3px;background:#00f4fe;flex-shrink:0;"></span>${item}</span>`
-        ).join('');
-      }
-      localStorage.setItem('dzx-lang', lang);
-    }
+ const track = document.getElementById('marquee-track');
+ if (track && t['marquee']) {
+ const items = [...t['marquee'], ...t['marquee']];
+ track.innerHTML = items.map(item =>
+ `<span style="display:inline-flex;align-items:center;gap:10px;padding:0 32px;font-family:'Space Grotesk',sans-serif;font-size:0.63rem;font-weight:500;letter-spacing:0.2em;text-transform:uppercase;color:#777575;white-space:nowrap;"><span style="width:3px;height:3px;background:#00f4fe;flex-shrink:0;"></span>${item}</span>`
+ ).join('');
+ }
+ localStorage.setItem('dzx-lang', lang);
+ }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      applyLang(currentLang);
-      setTimeout(() => {
-        document.querySelectorAll('.reveal').forEach(el => {
-          if (el.getBoundingClientRect().top < window.innerHeight - 60) el.classList.add('visible');
-        });
-      }, 120);
-    });
-  </script>
+ document.addEventListener('DOMContentLoaded', () => {
+ applyLang(currentLang);
+ setTimeout(() => {
+ document.querySelectorAll('.reveal').forEach(el => {
+ if (el.getBoundingClientRect().top < window.innerHeight - 60) el.classList.add('visible');
+ });
+ }, 120);
+ });
+ </script>
 
 </body>
 </html>
