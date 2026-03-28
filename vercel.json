@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/templates/dzx_index.html" }
+    { "source": "/v1", "destination": "/templates/v1.html" },
+    { "source": "/v2", "destination": "/templates/v2.html" },
+    { "source": "/v3", "destination": "/templates/v3.html" },
+    { "source": "/",  "destination": "/index.html" }
   ]
 }
