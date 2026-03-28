@@ -219,10 +219,25 @@
     .wave-bar:nth-child(15) { animation: waveBar 1.2s ease-in-out 0.75s infinite; }
     .wave-bar:nth-child(16) { animation: waveBar 1.2s ease-in-out 0.85s infinite; }
 
+
+    /* ── Mobile hero responsive ── */
+    @media (max-width: 767px) {
+      #hero-grid {
+        grid-template-columns: 1fr !important;
+        gap: 2rem !important;
+      }
+      #hero-right-panel {
+        display: none !important;
+      }
+      .hero-h1, .hero-h1-line2 {
+        font-size: clamp(3.2rem, 18vw, 6rem) !important;
+      }
+    }
+
     /* ── Condensed display headline (Monolith-style) ── */
     .headline-condensed {
       font-family: 'Bebas Neue', 'Barlow Condensed', 'Noto Sans SC', 'Space Grotesk', sans-serif;
-      line-height: 0.88;
+      line-height: 0.95;
       letter-spacing: 0.03em;
       text-transform: uppercase;
       font-weight: 900;
@@ -288,7 +303,11 @@
       <div class="flex items-center justify-between h-14">
 
         <!-- Logo (hidden at top, appears on scroll) -->
-        <a id="header-logo" href="#" class="select-none" style="font-family:'Bebas Neue','Barlow Condensed',sans-serif;font-size:1.6rem;letter-spacing:0.08em;color:white;line-height:1;">CLAW CLOUD</a>
+        <a id="header-logo" href="#" class="flex items-center gap-2 select-none">
+          <svg width="895" height="653" viewBox="0 0 895 653" fill="none" xmlns="http://www.w3.org/2000/svg" class="logo-float" style="height:26px;width:auto;"><style>@keyframes kClawL{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-12deg)}}@keyframes kClawR{0%,100%{transform:rotate(0deg)}50%{transform:rotate(12deg)}}@keyframes kLegL{0%,100%{transform:rotate(0deg)}50%{transform:rotate(-7deg)}}@keyframes kLegR{0%,100%{transform:rotate(0deg)}50%{transform:rotate(7deg)}}@keyframes kEyeP{0%,86%,100%{opacity:1}93%{opacity:0.05}}#claw_left{transform-box:fill-box;transform-origin:40% 72%;animation:kClawL 2.4s ease-in-out infinite}#claw_right{transform-box:fill-box;transform-origin:62% 72%;animation:kClawR 2.4s ease-in-out infinite}#leg_l1{transform-box:fill-box;transform-origin:100% 38%;animation:kLegL 1.8s ease-in-out infinite 0s}#leg_l2{transform-box:fill-box;transform-origin:100% 5%;animation:kLegL 1.8s ease-in-out infinite 0.3s}#leg_l3{transform-box:fill-box;transform-origin:100% 0%;animation:kLegL 1.8s ease-in-out infinite 0.6s}#leg_r1{transform-box:fill-box;transform-origin:0% 38%;animation:kLegR 1.8s ease-in-out infinite 0.15s}#leg_r2{transform-box:fill-box;transform-origin:0% 5%;animation:kLegR 1.8s ease-in-out infinite 0.45s}#leg_r3{transform-box:fill-box;transform-origin:0% 0%;animation:kLegR 1.8s ease-in-out infinite 0.75s}#eye_left circle,#eye_right circle{animation:kEyeP 4.5s ease-in-out infinite 1s}</style><defs><linearGradient id="kbg" x1="448.5" y1="222.5" x2="448.5" y2="594.5" gradientUnits="userSpaceOnUse"><stop stop-color="#E64926"/><stop offset="1" stop-color="#870924"/></linearGradient><linearGradient id="kcl" x1="180.544" y1="0" x2="180.544" y2="251.5" gradientUnits="userSpaceOnUse"><stop stop-color="#E94A2C"/><stop offset="1" stop-color="#D90E22"/></linearGradient><linearGradient id="kcl2" x1="293.307" y1="65.6709" x2="293.307" y2="192.538" gradientUnits="userSpaceOnUse"><stop stop-color="#E9482C"/><stop offset="1" stop-color="#DC1924"/></linearGradient><linearGradient id="kcr" x1="717.069" y1="0" x2="717.069" y2="251.5" gradientUnits="userSpaceOnUse"><stop stop-color="#E94A2C"/><stop offset="1" stop-color="#D90E22"/></linearGradient><linearGradient id="kcr2" x1="604.307" y1="65.6709" x2="604.307" y2="192.538" gradientUnits="userSpaceOnUse"><stop stop-color="#E9482C"/><stop offset="1" stop-color="#DC1924"/></linearGradient></defs><g id="crab"><rect id="body" x="246" y="222.5" width="405" height="372" rx="90" fill="url(#kbg)"/><g id="eye_left"><path d="M396.5 150.5C414.449 150.5 429 165.051 429 183C429 200.949 414.449 215.5 396.5 215.5C378.551 215.5 364 200.949 364 183C364 165.051 378.551 150.5 396.5 150.5ZM396.5 155.5C381.312 155.5 369 167.812 369 183C369 198.188 381.312 210.5 396.5 210.5C411.688 210.5 424 198.188 424 183C424 167.812 411.688 155.5 396.5 155.5Z" fill="#DE4326"/><circle cx="396.5" cy="183" r="27.5" fill="black"/><rect x="390" y="212.5" width="16" height="10" fill="#DE4326"/><circle cx="396.5" cy="183" r="9.5" fill="#14DEFF"/></g><g id="eye_right"><path d="M499.5 150.5C517.449 150.5 532 165.051 532 183C532 197.644 522.314 210.024 509 214.088V222.5H493V214.849C478.166 211.837 467 198.723 467 183C467 165.051 481.551 150.5 499.5 150.5ZM499.5 155.5C484.312 155.5 472 167.812 472 183C472 198.188 484.312 210.5 499.5 210.5C514.688 210.5 527 198.188 527 183C527 167.812 514.688 155.5 499.5 155.5Z" fill="#DE4326"/><circle cx="499.5" cy="183" r="27.5" fill="black"/><circle cx="499.5" cy="183" r="9.5" fill="#14DEFF"/></g><path id="leg_l1" d="M110.293 341.5L225.293 381V423L117.793 392.5C87.6266 409.667 27.2933 444.3 27.2933 445.5C6.49325 444.7 3.95992 423.5 5.29325 413L110.293 341.5Z" fill="#D31A2A"/><path id="leg_l2" d="M101.187 428.304L222.625 434.459L222.625 477.934L122.498 475.241C98.256 500.081 49.8539 550.049 50.1858 551.202C29.9758 556.186 21.6782 536.513 20.0557 526.054L101.187 428.304Z" fill="#B91223"/><path id="leg_l3" d="M132.429 522.168C132.429 522.168 224.172 495.008 224.041 495.693C219 522.168 232.928 538.169 232.928 538.169L165.928 561.169C152.196 593.046 137.206 637.71 137.929 638.668C111.429 648.168 106.192 634.351 100.929 625.168L132.429 522.168Z" fill="#9C0A1D"/><path id="leg_r1" d="M784.24 341.5L669.24 381V423L776.74 392.5C806.907 409.667 867.24 444.3 867.24 445.5C888.04 444.7 890.573 423.5 889.24 413L784.24 341.5Z" fill="#D31A2A"/><path id="leg_r2" d="M793.347 428.304L671.908 434.459L671.908 477.934L772.035 475.241C796.277 500.081 844.679 550.049 844.347 551.202C864.557 556.186 872.855 536.513 874.477 526.054L793.347 428.304Z" fill="#B91223"/><path id="leg_r3" d="M762.104 522.168C762.104 522.168 670.361 495.008 670.492 495.693C675.533 522.168 661.605 538.169 661.605 538.169L728.605 561.169C742.337 593.046 757.327 637.71 756.604 638.668C783.104 648.168 788.342 634.351 793.604 625.168L762.104 522.168Z" fill="#9C0A1D"/><g id="claw_left"><path d="M268.5 2L207.152 0.271891C201.001 0.0986084 195.058 2.50978 190.766 6.92018L107 93L86 194.5L111 225L189.5 251.5L266 200L210 117C231.333 84.5 274.2 17.7 275 10.5C275.8 3.3 271 1.83333 268.5 2Z" fill="url(#kcl)"/><path d="M338 66L240 128.5C251.167 150.167 278 194 283 192.5C292.15 189.755 349.5 82.5 346.5 73C344.1 65.4 339.833 65.1667 338 66Z" fill="url(#kcl2)"/><path d="M187 266.5L112 243.5C117 260.5 124.362 294.512 128 303C134 317 142.667 320.833 147 323L229 357.5V296.5L234 286.5L207 266.5L158 308L187 266.5Z" fill="#DB1523"/></g><g id="claw_right"><path d="M629.114 2L690.461 0.271891C696.613 0.0986084 702.556 2.50978 706.848 6.92018L790.614 93L811.614 194.5L786.614 225L708.114 251.5L631.614 200L687.614 117C666.28 84.5 623.414 17.7 622.614 10.5C621.814 3.3 626.614 1.83333 629.114 2Z" fill="url(#kcr)"/><path d="M559.614 66L657.614 128.5C646.447 150.167 619.614 194 614.614 192.5C605.464 189.755 548.114 82.5 551.114 73C553.514 65.4 557.78 65.1667 559.614 66Z" fill="url(#kcr2)"/><path d="M710.614 266.5L785.614 243.5C780.614 260.5 773.251 294.512 769.614 303C763.614 317 754.947 320.833 750.614 323L668.614 357.5V296.5L663.614 286.5L690.614 266.5L739.614 308L710.614 266.5Z" fill="#DB1523"/></g></g></svg>
+
+          <span style="font-family:'Noto Sans SC',sans-serif;font-size:0.9rem;font-weight:900;color:white;letter-spacing:0.02em;">大闸蟹</span>
+        </a>
 
         <!-- Desktop Nav -->
         <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-[#666]">
@@ -298,7 +317,6 @@
           <a href="/guide"    class="hover:text-white transition-colors inline-flex items-center gap-1" data-i18n="nav.guide">使用教程<svg class="w-2.5 h-2.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
           <a href="/advanced" class="hover:text-white transition-colors inline-flex items-center gap-1" data-i18n="nav.advanced">高级功能<svg class="w-2.5 h-2.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
           <a href="/faq"      class="hover:text-white transition-colors inline-flex items-center gap-1" data-i18n="nav.faq">常见问题<svg class="w-2.5 h-2.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3"/></svg></a>
-          <a href="/recharge" class="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#1e2433] hover:bg-[#E85542] text-[#E85542] hover:text-white transition-all text-xs font-black border border-[#E85542]/40 hover:border-[#E85542]" data-i18n="nav.recharge">💰 余额充值</a>
         </nav>
 
         <!-- Right: Lang + CTA -->
@@ -320,6 +338,9 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
             </svg>
           </button>
+          <a href="/recharge"
+            class="hidden md:inline-flex items-center gap-1 text-sm font-black px-4 py-2 border border-white/30 text-white/70 hover:border-white hover:text-white transition-colors tracking-tight"
+            data-i18n="nav.recharge">余额充值</a>
           <a href="#pricing"
             class="hidden md:inline-flex items-center gap-1 bg-[#E85542] text-white text-sm font-black px-5 py-2 hover:bg-[#ef6b5a] transition-colors tracking-tight"
             data-i18n="nav.cta">查看方案 ↗</a>
@@ -385,19 +406,36 @@
         rgba(4,4,6,0.92) 0%,
         rgba(4,4,6,0.80) 45%,
         rgba(4,4,6,0.55) 100%);"></div>
+    <!-- Dot grid background -->
+    <div style="position:absolute;inset:0;z-index:1;pointer-events:none;
+      background-image: radial-gradient(circle, rgba(255,255,255,0.13) 1px, transparent 1px);
+      background-size: 28px 28px;
+      mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.6) 80%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.6) 20%, rgba(0,0,0,0.6) 80%, transparent 100%);
+    "></div>
     <!-- Bottom fade to black -->
     <div style="position:absolute;bottom:0;left:0;right:0;height:160px;z-index:1;pointer-events:none;
       background:linear-gradient(to bottom, transparent, rgba(4,4,6,0.95));"></div>
-    <div class="max-w-7xl mx-auto w-full items-center" style="display:grid;grid-template-columns:3fr 2fr;gap:3rem;align-items:center;position:relative;z-index:2;">
+    <div id="hero-grid" class="max-w-7xl mx-auto w-full items-center" style="display:grid;grid-template-columns:3fr 2fr;gap:3rem;align-items:center;position:relative;z-index:2;">
 
       <!-- ── LEFT: Text block ── -->
       <div>
-        <!-- Status line -->
-        <div class="flex items-center gap-3 mb-8">
-          <span class="w-2 h-2 rounded-full bg-[#E85542] animate-pulse flex-shrink-0"></span>
-          <span class="status-mono text-[#555]">SYSTEM_STATUS: OPERATIONAL</span>
-          <span class="w-12 h-px bg-[#1e2433] flex-shrink-0"></span>
-          <span class="status-mono text-[#333]">CLAW_CLOUD_v2</span>
+
+
+        <!-- Badge pills -->
+        <div class="flex items-center gap-2 mb-7 flex-wrap">
+          <!-- Telegram -->
+          <div style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:9999px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:rgba(255,255,255,0.55);flex-shrink:0;"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.19 13.267l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.958.292z"/></svg>
+            <span style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:0.03em;" data-i18n="badge.with">Works with</span>
+            <span style="font-size:11px;color:rgba(255,255,255,0.85);font-weight:600;letter-spacing:0.02em;">Telegram</span>
+          </div>
+          <!-- WeChat -->
+          <div style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:9999px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.12);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);">
+            <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:rgba(255,255,255,0.55);flex-shrink:0;"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.539c0 2.21 1.17 4.203 3.002 5.55a.644.644 0 01.232.692l-.61 2.271a.317.317 0 00.445.375l2.76-1.464a.64.64 0 01.512-.05c.868.25 1.81.385 2.78.385.23 0 .46-.008.686-.024-.144-.49-.221-1.002-.221-1.534 0-3.521 3.199-6.375 7.148-6.375.24 0 .477.012.712.036C16.098 5.142 12.74 2.188 8.69 2.188zm-2.48 4.085a1.07 1.07 0 110 2.141 1.07 1.07 0 010-2.141zm4.96 0a1.07 1.07 0 110 2.141 1.07 1.07 0 010-2.141zM17.307 10.8c-3.316 0-6 2.328-6 5.2 0 2.874 2.684 5.2 6 5.2.784 0 1.532-.13 2.22-.362a.49.49 0 01.397.038l2.103 1.116a.243.243 0 00.34-.287l-.466-1.73a.494.494 0 01.178-.53C23.108 18.26 24 17.17 24 16c0-2.872-2.685-5.2-6-5.2h-.693zm-1.76 3.07a.82.82 0 110 1.64.82.82 0 010-1.64zm3.518 0a.82.82 0 110 1.64.82.82 0 010-1.64z"/></svg>
+            <span style="font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:0.03em;" data-i18n="badge.with">Works with</span>
+            <span style="font-size:11px;color:rgba(255,255,255,0.85);font-weight:600;letter-spacing:0.02em;">WeChat</span>
+          </div>
         </div>
 
         <!-- Main headline — Bebas Neue condensed, hardcoded for layout stability -->
@@ -421,7 +459,7 @@
       </div>
 
       <!-- ── RIGHT: Visual panel ── -->
-      <div>
+      <div id="hero-right-panel">
         <div class="hero-panel overflow-hidden">
           <!-- Panel header -->
           <div class="bg-[#080808] border-b border-[#1e2433] px-4 py-2.5 flex items-center justify-between">
